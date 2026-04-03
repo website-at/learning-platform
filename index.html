@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FMCG Sales & Ops — Learning Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #222222;
+  --bg-sidebar: #111111;
+  --text: #e8e4de;
+  --text-dim: #8a8578;
+  --text-muted: #5a5549;
+  --accent: #f5a623;
+  --accent-dim: rgba(245,166,35,0.15);
+  --accent-border: rgba(245,166,35,0.3);
+  --border: #2a2a2a;
+  --green: #4caf50;
+  --red: #ef5350;
+  --mono: 'JetBrains Mono', monospace;
+  --serif: 'Playfair Display', Georgia, serif;
+  --sidebar-w: 280px;
+  --header-h: 56px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="light"] {
+  --bg: #f4f1eb;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f9f7f3;
+  --bg-sidebar: #ebe7e0;
+  --text: #1a1a1a;
+  --text-dim: #6b6560;
+  --text-muted: #9a9490;
+  --accent: #c4841d;
+  --accent-dim: rgba(196,132,29,0.12);
+  --accent-border: rgba(196,132,29,0.3);
+  --border: #d4d0c8;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 15px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-weight: 400;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+::selection { background: var(--accent); color: var(--bg); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+
+/* HEADER */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+  background: rgba(13,13,13,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; z-index: 1000;
+}
+[data-theme="light"] .header { background: rgba(244,241,235,0.92); }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.logo { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+.logo span { color: var(--text-dim); font-weight: 400; font-family: var(--mono); font-size: 0.7rem; margin-left: 8px; text-transform: uppercase; letter-spacing: 2px; }
+.progress-bar-wrap { flex: 1; max-width: 200px; margin-left: 20px; }
+.progress-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; }
+.progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease; width: 0%; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.theme-toggle, .hamburger {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  width: 36px; height: 36px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  transition: var(--transition);
+}
+.theme-toggle:hover, .hamburger:hover { border-color: var(--accent); color: var(--accent); }
+.hamburger { display: none; }
+
+/* SIDEBAR */
+.sidebar {
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  width: var(--sidebar-w); background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 900;
+  padding: 16px 0;
+  transition: transform var(--transition);
+}
+.sidebar-section { padding: 0 16px; margin-bottom: 8px; }
+.sidebar-title {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--text-muted); margin-bottom: 8px; padding-left: 8px;
+}
+.nav-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  transition: var(--transition); text-decoration: none; color: var(--text-dim);
+  font-size: 0.75rem; line-height: 1.4; border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--accent-dim); color: var(--text); }
+.nav-item.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-border); }
+.nav-num {
+  font-size: 0.6rem; color: var(--text-muted); min-width: 20px;
+  font-weight: 600; padding-top: 2px;
+}
+.nav-item.active .nav-num { color: var(--accent); }
+.nav-check { font-size: 0.7rem; margin-left: auto; opacity: 0; transition: var(--transition); }
+.nav-item.completed .nav-check { opacity: 1; color: var(--green); }
+
+/* MAIN CONTENT */
+.main {
+  margin-left: var(--sidebar-w); margin-top: var(--header-h);
+  min-height: calc(100vh - var(--header-h));
+  padding: 40px 48px 80px;
+  max-width: 900px;
+}
+
+/* MODULE */
+.module { margin-bottom: 64px; scroll-margin-top: 80px; }
+.module-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.module-tag {
+  font-size: 0.6rem; text-transform: uppercase; letter-spacing: 3px;
+  color: var(--accent); font-weight: 600;
+}
+.module-title {
+  font-family: var(--serif); font-size: 2rem; font-weight: 700;
+  color: var(--text); margin-top: 4px; line-height: 1.2;
+}
+.module-actions { display: flex; gap: 8px; }
+.btn {
+  background: none; border: 1px solid var(--border); color: var(--text-dim);
+  padding: 6px 14px; border-radius: 4px; cursor: pointer;
+  font-family: var(--mono); font-size: 0.7rem; transition: var(--transition);
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-accent { border-color: var(--accent); color: var(--accent); }
+.btn-accent:hover { background: var(--accent); color: var(--bg); }
+.btn-complete { border-color: var(--green); color: var(--green); }
+.btn-complete:hover { background: var(--green); color: var(--bg); }
+.btn-completed { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* ACCORDION */
+.accordion { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.accordion-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; cursor: pointer;
+  background: var(--bg-card); transition: var(--transition);
+  user-select: none;
+}
+.accordion-header:hover { background: var(--bg-card-hover); }
+.accordion-checkbox {
+  appearance: none; -webkit-appearance: none; width: 18px; height: 18px;
+  border: 1.5px solid var(--text-muted); border-radius: 3px; cursor: pointer;
+  flex-shrink: 0; position: relative; transition: var(--transition);
+}
+.accordion-checkbox:checked {
+  background: var(--accent); border-color: var(--accent);
+}
+.accordion-checkbox:checked::after {
+  content: '✓'; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); font-size: 11px; color: var(--bg); font-weight: 700;
+}
+.accordion-title {
+  flex: 1; font-size: 0.85rem; font-weight: 500; color: var(--text);
+}
+.accordion-header .checked-label .accordion-title { color: var(--text-dim); text-decoration: line-through; }
+.accordion-arrow {
+  font-size: 0.7rem; color: var(--text-muted); transition: transform var(--transition);
+}
+.accordion.open .accordion-arrow { transform: rotate(180deg); }
+.accordion-body {
+  max-height: 0; overflow: hidden; transition: max-height 0.4s ease;
+}
+.accordion.open .accordion-body { max-height: 20000px; }
+.accordion-content {
+  padding: 0 18px 18px 48px;
+  font-size: 0.82rem; color: var(--text-dim); line-height: 1.8;
+}
+.accordion-content h4 {
+  font-family: var(--serif); font-size: 1.05rem; color: var(--text);
+  margin: 16px 0 8px; font-weight: 600;
+}
+.accordion-content p { margin-bottom: 12px; }
+.accordion-content strong { color: var(--text); font-weight: 600; }
+.accordion-content .formula {
+  background: var(--accent-dim); border-left: 3px solid var(--accent);
+  padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0;
+  font-family: var(--mono); font-size: 0.78rem; color: var(--accent);
+}
+.accordion-content .example {
+  background: rgba(76,175,80,0.08); border-left: 3px solid var(--green);
+  padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0;
+  font-size: 0.78rem;
+}
+.accordion-content .example::before {
+  content: '▸ EXAMPLE'; display: block; font-size: 0.6rem; letter-spacing: 2px;
+  color: var(--green); font-weight: 700; margin-bottom: 4px;
+}
+.accordion-content .note {
+  background: rgba(245,166,35,0.08); border-left: 3px solid var(--accent);
+  padding: 10px 14px; margin: 12px 0; border-radius: 0 6px 6px 0;
+  font-size: 0.78rem;
+}
+.accordion-content .note::before {
+  content: '▸ KEY INSIGHT'; display: block; font-size: 0.6rem; letter-spacing: 2px;
+  color: var(--accent); font-weight: 700; margin-bottom: 4px;
+}
+.accordion-content ul { margin: 8px 0 12px 16px; }
+.accordion-content li { margin-bottom: 6px; }
+.accordion-content table {
+  width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.78rem;
+}
+.accordion-content th {
+  background: var(--accent-dim); color: var(--accent); text-align: left;
+  padding: 8px 12px; font-weight: 600; font-size: 0.7rem;
+  text-transform: uppercase; letter-spacing: 1px;
+}
+.accordion-content td {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+}
+
+/* GLOSSARY */
+.glossary-search {
+  width: 100%; padding: 12px 18px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-family: var(--mono); font-size: 0.85rem;
+  margin-bottom: 20px; outline: none; transition: var(--transition);
+}
+.glossary-search:focus { border-color: var(--accent); }
+.glossary-search::placeholder { color: var(--text-muted); }
+.glossary-grid { display: grid; gap: 8px; }
+.glossary-item {
+  padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; transition: var(--transition);
+}
+.glossary-item:hover { border-color: var(--accent-border); }
+.glossary-term {
+  font-weight: 700; color: var(--accent); font-size: 0.85rem; margin-bottom: 4px;
+}
+.glossary-def { font-size: 0.78rem; color: var(--text-dim); line-height: 1.6; }
+.glossary-item.hidden { display: none; }
+
+/* PRINT */
+@media print {
+  .sidebar, .header, .hamburger, .theme-toggle, .btn, .module-actions { display: none !important; }
+  .main { margin: 0; padding: 20px; max-width: 100%; }
+  .accordion-body { max-height: none !important; }
+  .accordion { break-inside: avoid; }
+  body { background: #fff; color: #000; font-size: 11px; }
+  .module-title { font-size: 1.4rem; }
+  .accordion-content { color: #333; }
+  .formula, .example, .note { border-left-width: 2px; }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%); width: 280px;
+    top: 0; padding-top: calc(var(--header-h) + 16px);
+    z-index: 1100;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 1050; display: none;
+  }
+  .sidebar-overlay.show { display: block; }
+  .main { margin-left: 0; padding: 24px 16px 80px; }
+  .hamburger { display: flex; }
+  .module-title { font-size: 1.5rem; }
+  .module-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .progress-bar-wrap { max-width: 120px; }
+  .logo span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+    <div class="logo">S&O Terminal<span>Learning Platform</span></div>
+    <div class="progress-bar-wrap">
+      <div class="progress-label"><span id="progressPct">0</span>% Complete</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" id="themeBtn">◐</button>
+  </div>
+</header>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="sidebar-title">Modules</div>
+    <a class="nav-item active" href="#mod1" onclick="navClick(this)">
+      <span class="nav-num">01</span>Sales Fundamentals<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod2" onclick="navClick(this)">
+      <span class="nav-num">02</span>Distributor &amp; Channel Mgmt<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod3" onclick="navClick(this)">
+      <span class="nav-num">03</span>Key Account Management<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod4" onclick="navClick(this)">
+      <span class="nav-num">04</span>P&amp;L Management<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod5" onclick="navClick(this)">
+      <span class="nav-num">05</span>Inventory &amp; Category Mgmt<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod6" onclick="navClick(this)">
+      <span class="nav-num">06</span>E-Commerce Fundamentals<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod7" onclick="navClick(this)">
+      <span class="nav-num">07</span>Quick Commerce<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod8" onclick="navClick(this)">
+      <span class="nav-num">08</span>Operations &amp; Supply Chain<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod9" onclick="navClick(this)">
+      <span class="nav-num">09</span>Data &amp; Analytics<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod10" onclick="navClick(this)">
+      <span class="nav-num">10</span>Jargon Glossary<span class="nav-check">✓</span>
+    </a>
+    <a class="nav-item" href="#mod11" onclick="navClick(this)">
+      <span class="nav-num">11</span>Career Roadmap<span class="nav-check">✓</span>
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="mainContent">
+
+<!-- ==================== MODULE 1 ==================== -->
+<section class="module" id="mod1">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 01</div>
+    <h2 class="module-title">Sales Fundamentals</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod1')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod1')" id="mod1-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Primary Sales vs Secondary Sales vs Tertiary Sales</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Primary Sales</h4>
+    <p><strong>Definition:</strong> The sale of goods from the <strong>manufacturer/company</strong> to the <strong>distributor/stockist</strong>. This is the first commercial transaction in the supply chain. Primary sales generate the company's top-line revenue (Gross Revenue) and are invoiced from the company's depots or CFAs.</p>
+    <p><strong>Why it matters:</strong> Primary sales drive the company's billing numbers and revenue targets. However, high primary sales without matching secondary sales leads to "channel stuffing" — stock piles up at distributors, damages increase, and freshness suffers.</p>
+    <div class="example">A Soulflower distributor in Pune places an order of ₹3,00,000 worth of products from the CFA. This ₹3L is booked as Primary Sales for the company. The distributor now holds this inventory in his godown.</div>
+
+    <h4>Secondary Sales</h4>
+    <p><strong>Definition:</strong> The sale from the <strong>distributor</strong> to the <strong>retailer</strong> (kirana shop, MT outlet, pharmacy, etc.). This is the real indicator of market demand because it represents products moving closer to the end consumer.</p>
+    <p><strong>Why it matters:</strong> Secondary sales reflect genuine market pull. Companies increasingly track and incentivize secondary rather than primary because it correlates with actual consumption. Distributor Management Systems (DMS) and sales force apps capture secondary data beat-by-beat.</p>
+    <div class="example">The Pune distributor's salesman visits 40 retail stores on his beat and generates ₹80,000 in orders. These ₹80K are secondary sales for that day. Aggregated across all distributors nationally, secondary sales = market offtake.</div>
+
+    <h4>Tertiary Sales</h4>
+    <p><strong>Definition:</strong> The sale from the <strong>retailer to the end consumer</strong>. This is the final transaction — what actually gets consumed. It's the hardest to track in General Trade (GT) but is automatically captured in Modern Trade (via POS billing) and E-commerce (via marketplace order data).</p>
+    <p><strong>Why it matters:</strong> Tertiary data is gold. It tells you real consumer demand, which SKUs are moving, what's the price sensitivity, and what's the true velocity. Brands that can access tertiary data (through loyalty programs, MT partnerships, or e-commerce analytics) have a massive planning advantage.</p>
+    <div class="example">A consumer walks into an Apollo pharmacy and buys a Soulflower Rosemary Oil for ₹449. This is a tertiary sale. Apollo's POS system records it, and if you have a sell-out data sharing agreement, you can track it.</div>
+
+    <div class="note">The holy grail is <strong>Primary ≈ Secondary ≈ Tertiary</strong>. If primary far exceeds secondary, you're stuffing the channel. If secondary exceeds primary, your distributors are depleting fast and you may face stockouts. Healthy supply chains keep all three tiers in sync.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">GT vs MT vs E-commerce vs Quick Commerce</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>General Trade (GT)</h4>
+    <p><strong>Definition:</strong> The traditional, unorganized retail channel — kirana stores, pan shops, medical stores, standalone grocery shops. India has ~12 million kirana stores; GT accounts for roughly 80-85% of FMCG retail in India.</p>
+    <p><strong>Margin structure:</strong> Retailer margin: 8–20% depending on category. Distributor margin: 3–8% on MRP. The brand controls MRP and gives a PTR (Price to Retailer) and PTS (Price to Stockist).</p>
+    <p><strong>How to operate:</strong> You need feet on the street. TSIs (Territory Sales Incharges) cover 25–40 outlets/day on their beat. They take orders, check visibility, ensure planograms (if any), and manage schemes. Distribution is king — the wider your numeric distribution, the more you sell.</p>
+
+    <h4>Modern Trade (MT)</h4>
+    <p><strong>Definition:</strong> Organized retail chains — supermarkets, hypermarkets, department stores. Examples: Reliance Retail, DMart, Spencer's, Shoppers Stop, More Supermarkets, Star Bazaar.</p>
+    <p><strong>Margin structure:</strong> Higher margins: 25–45% effective margin to the chain (inclusive of listing fees, promotional contributions, gondola charges, etc.). The chain buyer negotiates hard — your cost-to-serve is much higher.</p>
+    <p><strong>How to operate:</strong> Key Account Management (KAM). You deal with centralized buyers, negotiate trade terms annually (JBP), pay for shelf space, run in-store promoters, and track sell-out data weekly. Planning is more structured but costs are higher.</p>
+
+    <h4>E-Commerce</h4>
+    <p><strong>Definition:</strong> Online marketplaces and your own D2C website. Marketplaces: Amazon, Flipkart, Myntra, Nykaa, Meesho. D2C: your own Shopify/WooCommerce store.</p>
+    <p><strong>Margin structure:</strong> Marketplace commissions: 5–25% (referral fee) + fulfilment fee + storage fee + closing fee. Effective take rate can be 30–45%. D2C margins are better (~70–80% gross) but you pay for customer acquisition (ads).</p>
+    <p><strong>How to operate:</strong> Catalog quality (titles, images, A+ content), competitive pricing, ad management (Sponsored Products), inventory management (avoid OOS), and review management. Data-driven — every click, impression, and conversion is trackable.</p>
+
+    <h4>Quick Commerce (Q-Commerce)</h4>
+    <p><strong>Definition:</strong> Ultra-fast delivery (10–30 minutes) from dark stores. Players: Blinkit, Zepto, Swiggy Instamart, BigBasket Now (BBNow).</p>
+    <p><strong>Margin structure:</strong> Brands typically give 35–50% margin to Q-commerce platforms. Higher than GT/MT because platforms demand it for the convenience premium and their operational costs (dark store rent, delivery fleet).</p>
+    <p><strong>How to operate:</strong> Get listed (through platform's category team), ensure stock at dark stores, maintain fill rates, competitive pricing, and participate in platform promotions (visibility banners, combo offers). Speed of replenishment is critical — OOS in Q-commerce means immediate lost sales.</p>
+
+    <table>
+      <tr><th>Parameter</th><th>GT</th><th>MT</th><th>E-Commerce</th><th>Q-Commerce</th></tr>
+      <tr><td>Reach</td><td>12M+ outlets</td><td>~15K outlets</td><td>Pan-India digital</td><td>Metro/Tier-1</td></tr>
+      <tr><td>Retailer Margin</td><td>8–20%</td><td>25–45%</td><td>30–45% take</td><td>35–50%</td></tr>
+      <tr><td>Data Visibility</td><td>Low</td><td>Medium</td><td>High</td><td>High</td></tr>
+      <tr><td>Cost to Serve</td><td>Medium</td><td>High</td><td>Medium-High</td><td>High</td></tr>
+      <tr><td>Speed to Market</td><td>Slow</td><td>Medium</td><td>Fast</td><td>Fastest</td></tr>
+      <tr><td>Key Metric</td><td>Numeric Distribution</td><td>Sell-out/shelf share</td><td>GMV, ROAS</td><td>Fill Rate, OTIF</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Beat Planning</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is a Beat Plan?</h4>
+    <p><strong>Definition:</strong> A beat plan is a <strong>pre-defined, systematic route</strong> that a field salesperson (TSI/SR) follows to visit a fixed set of retail outlets on a specific day. It ensures every outlet in the territory is visited at a defined frequency — daily, weekly, or bi-weekly depending on outlet potential.</p>
+    <p>Think of it as a "delivery route for sales calls." Without a beat plan, salespeople cherry-pick easy outlets, skip low-performing ones, and miss opportunities.</p>
+
+    <h4>How to Design a Beat</h4>
+    <p><strong>Step 1 — Universe mapping:</strong> List every retail outlet in the territory (kirana, medical, cosmetic, grocery, etc.). Use GPS tagging if possible.</p>
+    <p><strong>Step 2 — Classify outlets:</strong> Use ABC classification. A = high billing (top 20%), B = medium (next 30%), C = low (bottom 50%). Base this on secondary sales potential or actual billing history.</p>
+    <p><strong>Step 3 — Set visit frequency:</strong> A-class: 2x/week. B-class: 1x/week. C-class: 1x per 2 weeks. This ensures top outlets get more attention.</p>
+    <p><strong>Step 4 — Route design:</strong> Group outlets geographically to minimize travel time. A salesperson should be able to cover 25–40 outlets per day depending on market type (urban vs semi-urban).</p>
+    <p><strong>Step 5 — Weekly plan:</strong> Assign specific outlets to each day (Mon=Beat 1, Tue=Beat 2, etc.). Typically 5-6 working beats per week.</p>
+
+    <h4>Key Productivity Metrics</h4>
+    <div class="formula">
+      <strong>Productive Calls (PC):</strong> Number of outlets visited where an order was placed<br>
+      <strong>Strike Rate:</strong> PC ÷ Total Calls × 100 (healthy: 60–80%)<br>
+      <strong>Lines Per Call (LPC):</strong> Avg SKUs ordered per productive call (higher = deeper distribution)<br>
+      <strong>Average Bill Value:</strong> Total secondary sales ÷ Number of productive calls<br>
+      <strong>ECO (Effective Coverage of Outlets):</strong> Outlets billed at least once in the month ÷ Total mapped outlets
+    </div>
+    <div class="example">A TSI has 200 outlets in his beat universe. In a month, he visits all 200 but only 140 place orders. His ECO = 140/200 = 70%. His daily strike rate averages 65% (26 out of 40 calls are productive). If his LPC is 4.5, it means each ordering outlet buys about 4-5 different SKUs on average.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">ROI of a Distributor</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Why ROI Matters</h4>
+    <p>A distributor is essentially an <strong>investor</strong> in your brand. He puts up capital (inventory), infrastructure (godown, vehicles, salesmen), and effort (market coverage). His return on investment determines whether he stays motivated, prioritizes your brand, or switches to a competitor.</p>
+
+    <h4>The Formula</h4>
+    <div class="formula">
+      <strong>Distributor ROI = (Annual Net Earnings ÷ Average Investment) × 100</strong><br><br>
+      <strong>Net Earnings</strong> = Margin on Sales + Scheme Income + Cash Discount – Operating Expenses (salaries, vehicle, godown rent, interest on capital)<br><br>
+      <strong>Average Investment</strong> = Average Inventory Holding (at cost) + Outstanding Receivables from Retailers + Infrastructure Investment (proportional)
+    </div>
+
+    <h4>What's Healthy?</h4>
+    <p>A distributor typically expects <strong>24–36% annualized ROI</strong> on his invested capital. Below 20%, he'll deprioritize your brand. Above 40%, you're likely over-spending on margins/schemes and should optimize.</p>
+    <p><strong>Monthly margin realization:</strong> 2–3% net after all expenses is considered workable for most FMCG categories.</p>
+
+    <div class="example">
+      Distributor X has average inventory of ₹5L (at cost), receivables of ₹2L, and infrastructure investment of ₹1L. Total investment = ₹8L.<br>
+      Annual earnings: Margin income ₹3.6L + Scheme income ₹60K + Cash discount ₹30K – Expenses ₹1.8L = ₹2.7L net earnings.<br>
+      ROI = (2.7L / 8L) × 100 = <strong>33.75%</strong> — healthy.
+    </div>
+
+    <div class="note">To improve distributor ROI without increasing margins: reduce his inventory holding days (faster stock rotation), ensure timely claim settlement (damage/expiry), provide credit support for MT/institutional orders, and help improve his strike rate so his salesforce cost is productive.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Fill Rate, Throughput, Numeric & Weighted Distribution</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Fill Rate</h4>
+    <p><strong>Definition:</strong> The percentage of customer demand (orders) that is fulfilled from available stock, without backorders or stockouts.</p>
+    <div class="formula"><strong>Fill Rate = (Orders Fulfilled Completely ÷ Total Orders Received) × 100</strong></div>
+    <p>Target: 95%+ for FMCG. Below 90% signals serious supply chain issues — you're losing sales and damaging retailer trust.</p>
+    <div class="example">A distributor receives 100 order lines from retailers in a week. He can fulfil 92 lines in full from his current stock. Fill Rate = 92%. The 8 unfulfilled lines represent lost sales or delayed deliveries.</div>
+
+    <h4>Throughput</h4>
+    <p><strong>Definition:</strong> The rate at which goods move through a system (warehouse, distributor, retail shelf). Measured in units/cases per time period. High throughput = fast-moving, efficient operation.</p>
+    <div class="formula"><strong>Throughput = Total Units Shipped (or Sold) ÷ Time Period</strong></div>
+    <p>Used to evaluate warehouse efficiency, distributor velocity, and retail offtake speed.</p>
+
+    <h4>Numeric Distribution (ND)</h4>
+    <p><strong>Definition:</strong> The percentage of <strong>total relevant outlets</strong> where your product is physically available (stocked). It measures the breadth of your distribution — how many doors you're present in.</p>
+    <div class="formula"><strong>Numeric Distribution = (Outlets stocking your brand ÷ Total relevant outlets in the market) × 100</strong></div>
+    <div class="example">There are 500 cosmetics-relevant outlets in a city. Your hair oil is stocked in 175 of them. ND = 175/500 = 35%. If a competitor is at 60% ND, they have almost double the availability — and likely double the volume opportunity.</div>
+
+    <h4>Weighted Distribution (WD)</h4>
+    <p><strong>Definition:</strong> Accounts for the <strong>sales importance</strong> of the outlets where you're stocked. A brand present in the top-billing outlets will have a higher WD than one in small outlets, even if ND is similar.</p>
+    <div class="formula"><strong>Weighted Distribution = (Total category sales from outlets stocking your brand ÷ Total category sales from all outlets) × 100</strong></div>
+    <div class="example">The 175 outlets stocking your hair oil account for ₹40L of total hair oil category sales. Total market hair oil sales across all 500 outlets = ₹80L. WD = 40/80 = 50%. Your ND is 35% but WD is 50% — meaning you're present in the higher-billing outlets. Good.</div>
+
+    <div class="note"><strong>WD > ND</strong> means you're in the right (high-value) outlets. <strong>WD < ND</strong> means you're in many outlets but they're low-value ones — you need to upgrade your distribution quality. The gap between WD and ND is a key diagnostic metric.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod1">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">BTL Activations</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What is BTL (Below The Line)?</h4>
+    <p><strong>Definition:</strong> BTL refers to marketing activities that target consumers <strong>directly at or near the point of purchase</strong>, as opposed to ATL (Above The Line) activities like TV, radio, and print ads that target mass audiences. BTL is about driving immediate action — trial, purchase, and repeat.</p>
+
+    <h4>Types of BTL Activations</h4>
+    <ul>
+      <li><strong>In-store visibility:</strong> Shelf talkers, danglers, posters, standees, counter displays, branded racks, window branding. Cost: ₹500–₹5,000 per outlet depending on material.</li>
+      <li><strong>Sampling:</strong> Free product samples distributed outside stores, in malls, at events. Drives trial. Cost: product cost + promoter cost + logistics.</li>
+      <li><strong>Promoter deployment:</strong> Dedicated brand promoters (PGs — Promoter Girls/Guys) stationed at MT outlets to push your brand. Cost: ₹12,000–₹18,000/month per promoter.</li>
+      <li><strong>Consumer offers:</strong> Buy-1-Get-1, combo packs, price-off packs, scratch cards, cashback. Funded from the marketing budget or trade budget.</li>
+      <li><strong>Trade schemes:</strong> Extra margin/slab discounts to retailers for achieving targets. E.g., "Buy 10 cases, get 1 free" — incentivizes retailers to stock and push your brand.</li>
+      <li><strong>Van activations:</strong> Branded vans doing sampling + sales in residential areas, IT parks, colleges. High impact, high cost.</li>
+      <li><strong>Digital BTL:</strong> Hyperlocal social media ads, influencer seeding, WhatsApp-based retailer engagement, QR codes on packaging linking to offers.</li>
+    </ul>
+
+    <h4>BTL Cost vs ROI Framework</h4>
+    <div class="formula">
+      <strong>BTL ROI = (Incremental Revenue from Activation – Cost of Activation) ÷ Cost of Activation × 100</strong><br><br>
+      <strong>Incremental Revenue:</strong> Compare sales during activation period vs. baseline (same period, previous month/year, or control market without activation).
+    </div>
+    <div class="example">
+      You deploy 5 promoters across Shoppers Stop outlets for a month. Cost: 5 × ₹15K = ₹75K. During the month, your sell-out from those outlets is ₹4.2L vs. a baseline of ₹2.8L. Incremental = ₹1.4L.<br>
+      BTL ROI = (1,40,000 – 75,000) / 75,000 × 100 = <strong>86.7%</strong>. That's a solid activation — continue and scale.
+    </div>
+    <div class="note">Always measure BTL with a control group or a before/after baseline. Without this, you can't separate the activation's impact from natural demand fluctuations. Good Sales Ops teams set this up before launching the activation.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 2 ==================== -->
+<section class="module" id="mod2">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 02</div>
+    <h2 class="module-title">Distributor & Channel Management</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod2')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod2')" id="mod2-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Distributor Margin Structures</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Understanding the Margin Waterfall</h4>
+    <p>Every product has an MRP (Maximum Retail Price). Working backwards from MRP, the pricing structure looks like this:</p>
+    <div class="formula">
+      <strong>MRP</strong> → less Retailer Margin → <strong>PTR (Price to Retailer)</strong><br>
+      <strong>PTR</strong> → less Distributor Margin → <strong>PTS (Price to Stockist/Distributor)</strong><br>
+      <strong>PTS</strong> → less Company's trade discount → <strong>Company Net Realization</strong>
+    </div>
+
+    <h4>Typical Margin Components</h4>
+    <ul>
+      <li><strong>Primary Margin (Distributor's base margin):</strong> 3–10% on PTR. This is the standard margin he earns on every unit sold to a retailer.</li>
+      <li><strong>Secondary Margin / Performance Incentive:</strong> Additional 1–3% linked to secondary sales targets. Paid monthly or quarterly if targets are met.</li>
+      <li><strong>Scheme Income:</strong> Periodic schemes — e.g., "Buy 50 cases, get 2 free" or "5% extra discount on orders above ₹1L." Can add 2–5% effective margin during scheme periods.</li>
+      <li><strong>Cash Discount:</strong> 1–2% discount for upfront payment or payment within credit period (typically 7–15 days).</li>
+      <li><strong>Damage/Expiry Allowance:</strong> 0.5–1.5% of purchases allocated for damaged or expired goods. Some companies do actual replacement, others give a % allowance.</li>
+    </ul>
+
+    <h4>Effective Margin Calculation</h4>
+    <div class="example">
+      Product MRP: ₹500. PTR: ₹420 (16% retailer margin). PTS: ₹390 (7% distributor margin on PTR).<br>
+      Base margin earned per unit = ₹420 – ₹390 = ₹30.<br>
+      Add: scheme income ~₹8/unit, cash discount ~₹4/unit, damage allowance ~₹2/unit.<br>
+      Total income per unit = ₹44. <br>
+      Less: operating costs (salesman salary allocated, delivery vehicle, godown) ~₹15/unit.<br>
+      <strong>Net margin per unit ≈ ₹29 or ~6.9% on MRP.</strong>
+    </div>
+
+    <div class="note">The real art is balancing margin enough to keep distributors motivated without over-spending. If competitors offer 10% and you offer 5%, your distributor's salesmen will push competitor products. Monitor distributor ROI and competitive margin benchmarking quarterly.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Channel Conflict — Causes & Resolution</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is Channel Conflict?</h4>
+    <p><strong>Definition:</strong> When two or more sales channels compete against each other in a way that damages the brand's pricing, margins, or relationships. It's one of the biggest headaches in multi-channel FMCG distribution.</p>
+
+    <h4>Common Causes</h4>
+    <ul>
+      <li><strong>Price undercutting:</strong> E-commerce sells at MRP minus 30% while the kirana next door sells at MRP. The retailer feels cheated and deprioritizes your brand.</li>
+      <li><strong>Territory overlap:</strong> Two distributors serve the same retailers, leading to price wars and margin erosion.</li>
+      <li><strong>GT vs MT conflict:</strong> MT chains demand exclusive promotions or deeper discounts that GT retailers can't match, creating resentment.</li>
+      <li><strong>D2C vs marketplace:</strong> Your own website undercuts your Amazon pricing, confusing consumers and annoying marketplace partners.</li>
+      <li><strong>Unauthorized sellers:</strong> Grey market operators buy in bulk from one market and dump in another at lower prices.</li>
+    </ul>
+
+    <h4>Resolution Strategies</h4>
+    <ul>
+      <li><strong>MAP (Minimum Advertised Price) policy:</strong> Set a floor price below which no channel can advertise. Enforce with penalties.</li>
+      <li><strong>Channel-exclusive SKUs:</strong> Create pack sizes or variants exclusive to each channel. E.g., 200ml for GT, 300ml for MT, combo packs for D2C, smaller SKUs for Q-commerce.</li>
+      <li><strong>Uniform trade pricing:</strong> Keep PTS consistent across channels. Differentiate through in-store execution, not price.</li>
+      <li><strong>Territory mapping:</strong> Assign clear pin-code level territories to distributors. Use DMS geo-fencing to flag out-of-territory billing.</li>
+      <li><strong>Controlled e-commerce distribution:</strong> Use authorized sellers only on marketplaces. Monitor unauthorized listings with brand protection tools.</li>
+    </ul>
+    <div class="note">Channel conflict is inevitable in multi-channel distribution. The goal isn't to eliminate it — it's to manage it so that all channels feel fairly treated. Regular channel health audits (quarterly) and pricing reviews are essential.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Distributor Health Scorecard</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Why Score Distributor Health?</h4>
+    <p>Not all distributors perform equally. A scorecard gives you an objective, data-driven view of which distributors are strong, which need support, and which need replacement. Review monthly/quarterly with your ASM team.</p>
+
+    <h4>Key KPIs to Track</h4>
+    <table>
+      <tr><th>KPI</th><th>Formula / Measure</th><th>Target</th></tr>
+      <tr><td>Secondary Sales Achievement</td><td>Actual secondary ÷ Target × 100</td><td>≥90%</td></tr>
+      <tr><td>ECO (Effective Coverage)</td><td>Outlets billed ÷ Mapped outlets</td><td>≥70%</td></tr>
+      <tr><td>Fill Rate</td><td>Orders fulfilled ÷ Orders received</td><td>≥95%</td></tr>
+      <tr><td>Outstanding Days</td><td>Avg receivables ÷ Daily sales</td><td>≤15 days</td></tr>
+      <tr><td>Inventory Days</td><td>Avg inventory ÷ Daily cost of sales</td><td>15–25 days</td></tr>
+      <tr><td>SKU Width</td><td># SKUs billed ÷ Total SKUs available</td><td>≥60%</td></tr>
+      <tr><td>Salesman Productivity</td><td>Secondary sales ÷ # Salesmen</td><td>Varies by market</td></tr>
+      <tr><td>Claim Settlement Speed</td><td>Avg days to settle damage/scheme claims</td><td>≤30 days</td></tr>
+      <tr><td>Infrastructure Compliance</td><td>Has: godown, vehicle, DMS, trained staff</td><td>100% compliance</td></tr>
+    </table>
+    <div class="note">Rank distributors into Green/Amber/Red based on composite scores. Green = top 30%, retain and reward. Amber = middle 40%, develop with training and support. Red = bottom 30%, give a 90-day improvement plan; if no change, evaluate replacement.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">How to Onboard a New Distributor</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Step-by-Step Process</h4>
+    <p><strong>Step 1 — Market assessment:</strong> Before appointing a distributor, map the market. How many outlets? What's the category potential? What's the competition doing? Is there an existing distributor failing, or is this a new geography?</p>
+    <p><strong>Step 2 — Distributor profiling:</strong> Identify candidates. Look for: financial strength (can hold 15–20 days of inventory), existing infrastructure (godown, delivery vehicles), salesforce (or willingness to hire), market reputation, and experience in your category or adjacent categories.</p>
+    <p><strong>Step 3 — Due diligence:</strong> Verify financials (bank references, IT returns), godown visit, check existing brand portfolio (avoid conflicts with direct competitors), and speak to other principals he serves.</p>
+    <p><strong>Step 4 — Terms negotiation:</strong> Agree on: margin structure, credit period, minimum order quantity, sales targets (monthly/quarterly), territory boundaries, scheme participation norms, and damage/expiry policy.</p>
+    <p><strong>Step 5 — Agreement signing:</strong> Execute a distributor agreement (legal document) covering: territory, product list, pricing, payment terms, termination clauses, and non-compete (if applicable).</p>
+    <p><strong>Step 6 — Setup:</strong> Install DMS software on distributor's system and salesmen's phones. Create distributor code in your ERP/billing system. Provide POS materials, product training decks, and beat plan templates.</p>
+    <p><strong>Step 7 — Launch order & market seeding:</strong> First order should cover key SKUs (top 10-15) in reasonable quantities. Send your ASM/TSI to accompany the distributor's salesmen for the first 2 weeks to seed the market, explain the brand to retailers, and set up initial visibility.</p>
+    <p><strong>Step 8 — 90-day review:</strong> After 3 months, review performance against agreed targets. Adjust beat plans, add/drop SKUs, and decide whether to continue or reassess.</p>
+
+    <div class="note">The first 90 days make or break a distributor relationship. Over-invest in hand-holding during this period. If the distributor doesn't see traction in 90 days, he'll mentally deprioritize your brand forever.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Super Stockist vs Distributor vs Sub-Distributor vs Wholesaler</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <table>
+      <tr><th>Role</th><th>Who They Sell To</th><th>Margin</th><th>When to Use</th></tr>
+      <tr><td><strong>Super Stockist (SS)</strong></td><td>Distributors (not retail)</td><td>1–3% handling margin</td><td>When you can't reach remote geographies directly from CFA. SS acts as a redistribution hub.</td></tr>
+      <tr><td><strong>Distributor</strong></td><td>Retailers directly via salesforce</td><td>3–10%</td><td>Core distribution model. One per town/area. Does secondary sales, credit management, and last-mile delivery to retail.</td></tr>
+      <tr><td><strong>Sub-Distributor</strong></td><td>Specific retail segment or micro-market</td><td>2–5%</td><td>When a distributor can't cover certain pockets — rural areas, specific bazaars, institutional accounts.</td></tr>
+      <tr><td><strong>Wholesaler</strong></td><td>Retailers who come to him (no salesforce)</td><td>1–3% (self-service)</td><td>High-volume, low-service model. Useful for FMCG staples with massive throughput. Not ideal for building brands.</td></tr>
+    </table>
+    <div class="note"><strong>Key difference:</strong> A Distributor <em>goes to</em> the retailer (outbound salesforce). A Wholesaler <em>waits</em> for the retailer to come to him (inbound). Brands building distribution use Distributors. Commodities and staples often rely on the Wholesaler network.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod2">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Secondary Sales Tracking Methods</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Why Track Secondary Sales?</h4>
+    <p>Primary sales (billing to distributor) can be manipulated through channel stuffing. Secondary sales = real market demand. Companies that track secondary accurately make better demand forecasting, scheme design, and territory planning decisions.</p>
+
+    <h4>Methods</h4>
+    <ul>
+      <li><strong>DMS (Distributor Management System):</strong> Software installed at the distributor's end (e.g., Bizom, FieldAssist, Botree). Every invoice the distributor raises to a retailer is captured digitally with outlet name, SKU, quantity, and GPS coordinates. This is the gold standard — real-time secondary data.</li>
+      <li><strong>SFA (Sales Force Automation) Apps:</strong> Apps on salesmen's phones (e.g., Bizom, FieldAssist). The salesman takes orders on the app; orders sync to HQ. Even if the distributor's billing is manual, the company gets order-level secondary data.</li>
+      <li><strong>Manual Reporting:</strong> Distributor sends a daily/weekly Excel or WhatsApp message with sales figures. Unreliable, often delayed, and easy to fudge. Used only when DMS isn't feasible (very small distributors).</li>
+      <li><strong>Claims-Based Estimation:</strong> Back-calculate secondary from scheme claims. If a distributor claims scheme benefit on 500 cases, he sold at least 500 cases. Rough but useful as a cross-check.</li>
+    </ul>
+    <div class="note">Invest in DMS early. The data it provides pays for itself many times over in better forecasting, scheme ROI tracking, and distributor performance management. Most leading FMCG companies mandate DMS as a non-negotiable condition for distributor appointment.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 3 ==================== -->
+<section class="module" id="mod3">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 03</div>
+    <h2 class="module-title">Key Account Management</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod3')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod3')" id="mod3-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">What Is a Key Account? ABC Classification</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Definition</h4>
+    <p>A <strong>Key Account</strong> is a customer (retailer, chain, or platform) that is strategically important to the business due to its revenue contribution, market influence, or growth potential. Not every large customer is a key account — it's about strategic importance, not just size.</p>
+
+    <h4>ABC Classification</h4>
+    <p><strong>A Accounts (Strategic):</strong> Top 10-15% of accounts contributing 60-70% of revenue. These get dedicated KAMs, customized plans, and senior management attention. Examples: Reliance Retail, DMart, Amazon, Flipkart, Apollo Pharmacy (nationally).</p>
+    <p><strong>B Accounts (Growth):</strong> Next 20-25% contributing 20-25% of revenue. Managed by the KAM team but with less customization. They have potential to become A accounts. Examples: Spencer's, More, regional MT chains, Nykaa.</p>
+    <p><strong>C Accounts (Maintenance):</strong> Remaining accounts contributing 10-15% of revenue. Managed through standard trade terms and periodic reviews. Don't over-invest here — efficient service, not customization.</p>
+
+    <h4>Classification Criteria (Beyond Revenue)</h4>
+    <ul>
+      <li>Revenue contribution (current and projected)</li>
+      <li>Strategic value (market access, consumer reach, brand visibility)</li>
+      <li>Growth potential (is the account growing?)</li>
+      <li>Margin quality (high-revenue but negative-margin accounts may not be 'A')</li>
+      <li>Competitive position (are competitors heavily invested here?)</li>
+    </ul>
+    <div class="note">Review classification bi-annually. Accounts move between tiers. A regional chain that expands nationally should be upgraded. A declining chain bleeding margin should be downgraded. Classification drives resource allocation — get it wrong and you're investing in the wrong places.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Account Planning Framework</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Annual Account Plan</h4>
+    <p>Created once a year (usually Nov-Dec for the next fiscal year). Components:</p>
+    <ul>
+      <li><strong>Account overview:</strong> History, current relationship, buyer contacts, store count, geographic presence.</li>
+      <li><strong>Performance review:</strong> Last year's sales, margin, market share within the account, YoY growth.</li>
+      <li><strong>SWOT analysis:</strong> Specific to your brand within this account.</li>
+      <li><strong>Annual targets:</strong> Revenue, margin, market share, distribution (# of stores × # of SKUs), new launch listings.</li>
+      <li><strong>Investment plan:</strong> Trade spending (listing fees, promotions, gondola, promoters) with expected ROI.</li>
+      <li><strong>Joint initiatives:</strong> New product launches, category captainship, exclusive offers, digital integration.</li>
+    </ul>
+
+    <h4>Quarterly Business Review (QBR)</h4>
+    <p>Review progress against annual plan. Adjust tactics. Share data and insights with the buyer. Topics: sales performance vs target, top/bottom SKU analysis, promotional ROI review, competitive activity, upcoming plans.</p>
+
+    <h4>Monthly Operating Plan</h4>
+    <p>Tactical execution: this month's promotions, stock replenishment plan, store-level targets, promoter deployment schedule, planogram compliance audit dates.</p>
+
+    <div class="example">For Shoppers Stop, your annual plan might include: ₹1.2Cr sell-in target, presence in 80 of 95 stores, top 25 SKUs listed, 3 seasonal promotions (summer/monsoon/festive), 10 in-store promoters during peak months, monthly sell-out data sharing agreement, and a joint "Natural Beauty" category feature in Q3.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Joint Business Planning (JBP)</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is a JBP?</h4>
+    <p><strong>Definition:</strong> A Joint Business Plan is a <strong>collaborative agreement</strong> between a brand/vendor and a key retail account that outlines mutual goals, strategies, and commitments for a defined period (usually 1 year). It's a partnership document, not a one-sided sales pitch.</p>
+
+    <h4>Structure of a JBP</h4>
+    <p><strong>1. Shared Objectives:</strong> Both parties agree on category growth targets, consumer trends to capitalize on, and mutual KPIs (e.g., category growth of 15%, your brand's share target of 8%).</p>
+    <p><strong>2. Assortment Plan:</strong> Which SKUs will be listed? In how many stores? What's the new product launch calendar? Any delisting recommendations?</p>
+    <p><strong>3. Pricing & Promotion Calendar:</strong> Month-by-month promotional plan. Which events (Republic Day, Diwali, Summer Sale)? What discounts? Who funds what? Co-branded offers?</p>
+    <p><strong>4. Merchandising & Visibility:</strong> Planogram share, gondola end placements, secondary placements, seasonal displays. Who pays and how much?</p>
+    <p><strong>5. Supply Chain Commitments:</strong> Service levels (OTIF targets), inventory norms at warehouse and store level, order lead times, returns policy.</p>
+    <p><strong>6. Investment Summary:</strong> Total trade spend broken down by listing fees, promotional contributions, visibility charges, promoter costs. With expected ROI calculations.</p>
+    <p><strong>7. Governance:</strong> Meeting cadence (monthly reviews, QBRs), data sharing commitments, escalation matrix, contact persons.</p>
+
+    <div class="note">The best JBPs are <strong>data-driven</strong>. Come with shopper insights, category trends, and basket analysis. MT buyers respect vendors who bring intelligence, not just discounts. The JBP negotiation is also where trade terms are locked — so prepare your P&L impact analysis before walking in.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">How Modern Trade Buyers Think</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Their KPIs</h4>
+    <p>An MT buyer (Category Manager at Reliance/DMart/Shoppers Stop) is measured on:</p>
+    <ul>
+      <li><strong>Category Sales Growth:</strong> Overall category performance, not your brand specifically. They want the category to grow.</li>
+      <li><strong>Gross Margin Return on Investment (GMROI):</strong> How much gross margin they generate per rupee of inventory. This is arguably their most important metric.</li>
+      <li><strong>Sales per sq ft:</strong> Revenue generated per square foot of shelf/floor space. Every inch of shelf has to earn its keep.</li>
+      <li><strong>Inventory Turns:</strong> How fast products move off the shelf. Slow movers get delisted.</li>
+      <li><strong>Promotional ROI:</strong> Did the promotion drive incremental sales, or did it just cannibalize regular sales?</li>
+    </ul>
+
+    <h4>What They Want From Vendors</h4>
+    <ul>
+      <li><strong>Consistent supply:</strong> Nothing annoys a buyer more than OOS (out of stock). It means empty shelves = lost sales = poor performance for them.</li>
+      <li><strong>Data and insights:</strong> Category trends, consumer behavior shifts, competitive intelligence. Be a thought partner, not just a supplier.</li>
+      <li><strong>Promotional innovation:</strong> Fresh ideas for driving footfall and basket size. Not just "10% off" every time.</li>
+      <li><strong>Margin protection:</strong> Competitive pricing that lets them maintain their margin. Don't create pricing conflicts.</li>
+      <li><strong>Speed:</strong> Quick decision-making on claims, new listings, promotional confirmations. Vendors who delay cost buyers time and opportunities.</li>
+    </ul>
+
+    <div class="formula"><strong>GMROI = Gross Margin ÷ Average Inventory Cost</strong><br>If your brand delivers GMROI of 4.5x and the category average is 3.2x, you have a strong argument for more shelf space.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Trade Terms Explained</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Are Trade Terms?</h4>
+    <p>Trade terms are the <strong>commercial conditions</strong> negotiated between a brand and an MT retailer that define the cost of doing business in that chain. They represent a significant chunk of your cost-to-serve MT.</p>
+
+    <h4>Common Trade Term Components</h4>
+    <ul>
+      <li><strong>Listing Fee:</strong> One-time charge to list a new SKU in the retailer's system and on shelves. Can range from ₹5,000 to ₹50,000 per SKU per store depending on the chain. National chains may charge ₹1–5L for national listing of a single SKU.</li>
+      <li><strong>Gondola End / End Cap Charge:</strong> Premium for placement at the end of an aisle (high visibility). Charged weekly or monthly: ₹5,000–₹25,000/store/week.</li>
+      <li><strong>In-Store Promoter Cost:</strong> If you place a brand promoter (demo person) inside the store, the chain may charge a ₹5,000–₹15,000/month "space fee" per store on top of the promoter's salary.</li>
+      <li><strong>Promotional Contribution:</strong> Mandatory contribution to the chain's promotional events (anniversary sale, festive sale). Typically 5–15% of your sales to that chain, taken as a back-end discount or credit note.</li>
+      <li><strong>Damage/Return Margin:</strong> MT chains typically negotiate 1.5–3% damage allowance. Some insist on 100% return on unsold goods (especially in apparel/fashion).</li>
+      <li><strong>Cash Discount / Payment Terms:</strong> Chains often negotiate 30–60 day credit. Some offer 2% cash discount for payment within 15 days.</li>
+      <li><strong>Annual Rebate / Turnover Discount:</strong> A back-end rebate of 1–5% on annual purchases if volume targets are met. Paid quarterly or annually.</li>
+    </ul>
+    <div class="note">Trade terms stack up. A chain might have: 8% base margin + 2% listing amortized + 3% promotional contribution + 1% gondola + 2% damage = <strong>16% effective cost</strong>. Build this into your MT channel P&L before committing. If your gross margin is 50%, your net margin after MT trade terms might be only 34%.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Planogram Basics & Share of Shelf</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is a Planogram?</h4>
+    <p><strong>Definition:</strong> A planogram (POG) is a <strong>visual diagram</strong> that specifies the exact placement of every product on a retail shelf — which SKU goes where, at what height, how many facings, and in what orientation. It's the blueprint of shelf space allocation.</p>
+
+    <h4>Why It Matters</h4>
+    <p>Shelf space = real estate. Products at eye level sell 30–50% more than those on bottom shelves. End caps sell 2–5x more than inline positions. More facings = more visibility = higher pick-up rates. The planogram directly drives sales velocity.</p>
+
+    <h4>Share of Shelf Calculation</h4>
+    <div class="formula"><strong>Share of Shelf (SoS) = (Your Brand's Shelf Space ÷ Total Category Shelf Space) × 100</strong><br><br>Measured in: linear feet, number of facings, or square footage of display.</div>
+    <div class="example">In a supermarket's hair care aisle, total shelf space = 20 linear feet. Your brand occupies 3 linear feet. SoS = 3/20 = 15%. If your market share in that retailer is 20%, you're <em>under-spaced</em> — you deserve more shelf. Use this argument in your next planogram review with the buyer.</div>
+
+    <h4>Planogram Compliance</h4>
+    <p>Having a planogram means nothing if stores don't follow it. Field teams should audit planogram compliance during store visits. Measure: % of stores where actual placement matches the agreed planogram. Target: 85%+ compliance. Use photos from store visits as evidence.</p>
+    <div class="note"><strong>Fair share principle:</strong> Your Share of Shelf should roughly equal your Share of Market in that category for that retailer. If SoS < Market Share, argue for more space. If SoS > Market Share, the buyer will eventually challenge you to justify it or reduce your space.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod3">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Sell-In vs Sell-Out</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Definitions</h4>
+    <p><strong>Sell-In:</strong> The quantity/value of goods <strong>sold into</strong> the retailer (from brand/distributor to the store's warehouse or shelf). This is your primary sales to MT = the retailer's purchase order to you.</p>
+    <p><strong>Sell-Out:</strong> The quantity/value of goods <strong>sold out</strong> of the retailer to consumers at the POS (billing counter). This is the actual consumer purchase = tertiary sales.</p>
+
+    <h4>Why the Gap Matters</h4>
+    <p>If Sell-In >> Sell-Out: Inventory is building up at the retailer. Danger signs: possible delisting, markdown pressure, returns, and damage. The retailer will stop reordering until the pile clears.</p>
+    <p>If Sell-Out >> Sell-In: The product is flying off shelves faster than you're replenishing. Great demand signal, but you're losing sales to OOS. Fix your replenishment cycle immediately.</p>
+    <p><strong>Healthy state:</strong> Sell-In ≈ Sell-Out ± 10-15% (with a small buffer for safety stock).</p>
+
+    <div class="formula"><strong>Weeks of Cover (WoC) = Current Inventory at Retailer ÷ Weekly Sell-Out Rate</strong><br>Target: 2–4 WoC depending on replenishment frequency. More than 6 WoC = overstocked. Less than 1 WoC = imminent OOS.</div>
+
+    <div class="example">You sell-in 500 units of hair oil to Shoppers Stop in January. January sell-out = 380 units. Closing inventory = 120 + opening inventory. If February sell-out pace is 100 units/week, you have 1.2 weeks of cover. Time to push another sell-in order before OOS hits.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 4 ==================== -->
+<section class="module" id="mod4">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 04</div>
+    <h2 class="module-title">P&L Management — Deep Dive</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod4')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod4')" id="mod4-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Gross Revenue / Gross Sales</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Definition</h4>
+    <p><strong>Gross Revenue (GR)</strong> is the total value of goods sold at invoice value <strong>before</strong> any deductions for discounts, schemes, returns, or taxes. It's the top line — the biggest number on your P&L. Also called Gross Sales or Gross Billing.</p>
+    <div class="formula"><strong>Gross Revenue = Total Units Sold × Invoice Price (inclusive of all charges, exclusive of GST)</strong></div>
+    <p>In most FMCG P&Ls, Gross Revenue is reported exclusive of GST (because GST is pass-through — collected from the buyer and remitted to the government).</p>
+    <div class="example">You ship 10,000 units in a month at an average invoice price of ₹350 each. GR = 10,000 × ₹350 = ₹35,00,000 (₹35 Lakhs). This is before you deduct any trade discounts or schemes.</div>
+    <div class="note">Gross Revenue is a vanity metric by itself. What matters is what you realize after deductions — Net Revenue. A brand with ₹100Cr GR and ₹70Cr NR is giving away 30% in trade spends, which may or may not be sustainable.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Trade Discounts, Schemes & Net Revenue</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Gets Deducted?</h4>
+    <ul>
+      <li><strong>Trade Discount:</strong> Standard discount given on invoice price to distributors/retailers. Usually 2–10% off invoice.</li>
+      <li><strong>Scheme / Off-Invoice Discount:</strong> Promotional discounts — "Buy 10 get 1 free," "5% extra on 50+ cases." Can be on-invoice (visible on bill) or off-invoice (credit note later).</li>
+      <li><strong>Promotional Spends (On-Bill):</strong> Consumer offers funded by the brand that reduce effective realization — price-off packs, combo offers, BOGO.</li>
+      <li><strong>Sales Returns:</strong> Goods returned by distributors/retailers (damaged, expired, or unsold). Reduces revenue.</li>
+      <li><strong>Credit Notes:</strong> Adjustments for claims — damage claims, scheme accruals, pricing corrections.</li>
+    </ul>
+
+    <h4>Net Revenue Formula</h4>
+    <div class="formula"><strong>Net Revenue (NR) = Gross Revenue – Trade Discounts – Schemes – Returns – Credit Notes</strong><br><br>Also called: Net Sales, Net Sales Value (NSV), or Net Realization.</div>
+
+    <h4>Why Net Revenue Matters</h4>
+    <p>NR is the <strong>true top line</strong> — it's what the company actually earns. All margin calculations (Gross Margin, Contribution Margin, EBITDA) are based on NR, not GR. When someone says "our brand does ₹50 Crores," they should clarify GR or NR — the difference can be 15–30%.</p>
+
+    <div class="example">
+      GR = ₹35L. Trade discount = ₹2.1L (6%). Scheme cost = ₹1.75L (5%). Returns = ₹35K (1%). Credit notes = ₹17.5K (0.5%).<br>
+      NR = 35L – 2.1L – 1.75L – 0.35L – 0.175L = <strong>₹30.625L</strong><br>
+      NR as % of GR = 87.5%. Trade + scheme burden = 12.5%. This is within healthy range for FMCG (10–20% is typical).
+    </div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Cost of Goods Sold (COGS)</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What's in COGS?</h4>
+    <p>COGS represents the <strong>direct cost of manufacturing</strong> the products you sold. For an FMCG brand, this includes:</p>
+    <ul>
+      <li><strong>Raw Material (RM):</strong> The ingredients. For a hair oil: base oils, essential oils, fragrances, preservatives. Typically 30–45% of NR for beauty/personal care.</li>
+      <li><strong>Packaging Material (PM):</strong> Bottles, labels, caps, cartons, shrink wrap, shipping boxes. Typically 10–20% of NR.</li>
+      <li><strong>Manufacturing Cost:</strong> If in-house: labor, utilities, maintenance, factory overheads. If contract manufactured (3P/toll): the manufacturing fee per unit charged by the contract manufacturer.</li>
+      <li><strong>Freight-In:</strong> Cost of transporting raw materials to the factory AND finished goods from the factory to the CFA/central warehouse. This is the <em>inbound</em> logistics cost that sits in COGS.</li>
+    </ul>
+
+    <h4>COGS Formula</h4>
+    <div class="formula"><strong>COGS = Opening Inventory (at cost) + Purchases (RM + PM + Manufacturing) + Freight-In – Closing Inventory (at cost)</strong><br><br>Or simplified for a P&L: <strong>COGS = RM Cost + PM Cost + Manufacturing Cost + Freight-In</strong></div>
+
+    <div class="example">
+      For a ₹449 MRP hair oil bottle:<br>
+      RM cost: ₹65 | PM cost: ₹38 | Manufacturing (toll): ₹22 | Freight-in: ₹8<br>
+      <strong>Total COGS = ₹133 per unit.</strong><br>
+      If NR per unit (after all trade deductions) = ₹280, then Gross Margin = ₹280 – ₹133 = ₹147 = <strong>52.5% Gross Margin</strong>. That's healthy for premium personal care.
+    </div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Gross Margin to EBITDA Waterfall</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>The Full P&L Waterfall</h4>
+    <div class="formula">
+      <strong>Gross Revenue (GR)</strong><br>
+      – Trade Discounts & Schemes<br>
+      = <strong>Net Revenue (NR)</strong><br>
+      – COGS (RM + PM + Manufacturing + Freight-In)<br>
+      = <strong>Gross Margin (GM)</strong><br>
+      – Distribution & Outbound Logistics (CFA charges, secondary freight, last-mile delivery)<br>
+      – Sales Force Cost (TSI salaries, ASM/RSM salaries, incentives, travel, promoter costs)<br>
+      – Marketing & BTL Spends (in-store visibility, sampling, digital BTL, influencer costs)<br>
+      – Warehousing & Storage (CFA/3PL storage fees, inventory carrying cost)<br>
+      – Marketplace Fees (for e-commerce: referral fees, fulfilment charges, ad spend)<br>
+      – Overheads (rent for office, admin, technology, insurance, legal)<br>
+      = <strong>EBITDA (Earnings Before Interest, Tax, Depreciation & Amortization)</strong>
+    </div>
+
+    <h4>Healthy Benchmarks (FMCG Personal Care)</h4>
+    <table>
+      <tr><th>Line Item</th><th>% of NR</th><th>Notes</th></tr>
+      <tr><td>COGS</td><td>35–50%</td><td>Lower for premium brands, higher for mass market</td></tr>
+      <tr><td>Gross Margin</td><td>50–65%</td><td>Premium personal care can hit 65%+</td></tr>
+      <tr><td>Distribution & Logistics</td><td>5–10%</td><td>Higher for all-India distribution</td></tr>
+      <tr><td>Sales Force</td><td>5–12%</td><td>Depends on channel mix; GT is people-heavy</td></tr>
+      <tr><td>Marketing & BTL</td><td>8–20%</td><td>New brands spend more (15–20%); established brands: 8–12%</td></tr>
+      <tr><td>Overheads</td><td>3–6%</td><td>Should be lean for startups/SMEs</td></tr>
+      <tr><td><strong>EBITDA</strong></td><td><strong>8–20%</strong></td><td>D2C brands target 15–20%; multi-channel: 10–15%</td></tr>
+    </table>
+
+    <div class="note">The P&L is a <strong>living document</strong>. Review it monthly at the brand level and quarterly at the channel/SKU level. The goal is to improve EBITDA through a combination of: growing NR (volume + price), reducing COGS (better sourcing, scale), optimizing trade spends (ROI-based schemes), and managing overheads.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Working Capital: Debtors, Creditors & Inventory Days</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is Working Capital?</h4>
+    <p><strong>Definition:</strong> Working capital is the money tied up in the day-to-day operations of the business — the gap between what you've paid out (raw materials, manufacturing) and what you've collected (from distributors/retailers). It's the <strong>lifeblood of cash flow</strong>.</p>
+    <div class="formula"><strong>Net Working Capital = Current Assets – Current Liabilities</strong><br><br>In FMCG practical terms: <strong>Working Capital Days = Debtor Days + Inventory Days – Creditor Days</strong></div>
+
+    <h4>Debtor Days (DSO — Days Sales Outstanding)</h4>
+    <p>How many days, on average, it takes to collect payment from your customers (distributors/retailers).</p>
+    <div class="formula"><strong>Debtor Days = (Average Trade Receivables ÷ Net Revenue) × 365</strong><br>Target: 15–30 days for GT distributors. 30–60 days for MT chains. E-commerce: 7–21 days (marketplace settlement cycles).</div>
+
+    <h4>Inventory Days (DIO — Days Inventory Outstanding)</h4>
+    <p>How many days of sales are sitting as unsold inventory in your warehouses.</p>
+    <div class="formula"><strong>Inventory Days = (Average Inventory at Cost ÷ COGS) × 365</strong><br>Target: 30–60 days for FMCG. Below 30 = risk of stockouts. Above 60 = cash locked up, risk of expiry.</div>
+
+    <h4>Creditor Days (DPO — Days Payable Outstanding)</h4>
+    <p>How many days you take to pay your suppliers (RM vendors, contract manufacturers).</p>
+    <div class="formula"><strong>Creditor Days = (Average Trade Payables ÷ Purchases) × 365</strong><br>Target: 30–60 days. Longer is better for your cash flow, but don't strain supplier relationships.</div>
+
+    <h4>Cash Conversion Cycle (CCC)</h4>
+    <div class="formula"><strong>CCC = Debtor Days + Inventory Days – Creditor Days</strong></div>
+    <div class="example">Debtor Days = 25, Inventory Days = 45, Creditor Days = 35. CCC = 25 + 45 – 35 = <strong>35 days</strong>. This means you need 35 days of operating expenses funded from your own capital before money starts flowing back. Lower CCC = better cash efficiency.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod4">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Channel P&L & Profitability Analysis</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Why Separate Channel P&Ls?</h4>
+    <p>A blended P&L hides the truth. Your GT channel might be profitable at 15% EBITDA while your MT channel bleeds at -5% after trade terms. Without channel-level P&Ls, you're flying blind.</p>
+
+    <h4>How to Build a Channel P&L</h4>
+    <p><strong>Step 1:</strong> Separate revenue by channel (GT, MT, E-com, D2C, Q-commerce).</p>
+    <p><strong>Step 2:</strong> Allocate COGS proportionally (same product, same cost — unless channel-specific packaging exists).</p>
+    <p><strong>Step 3:</strong> Assign channel-specific costs: trade discounts specific to that channel, salesforce dedicated to that channel, distribution costs specific to that channel's logistics, marketing spends specific to that channel.</p>
+    <p><strong>Step 4:</strong> Allocate shared overheads using a fair basis (revenue share, headcount share, or activity-based).</p>
+
+    <h4>Per-SKU Profitability</h4>
+    <div class="formula"><strong>SKU Contribution Margin = NR per unit – COGS per unit – Direct Channel Costs per unit</strong></div>
+    <p>Plot all SKUs on a Contribution Margin vs Volume matrix. Prioritize: High Margin + High Volume (stars). Investigate: High Volume + Low Margin (volume drivers but not profitable). Reduce investment in: Low Volume + Low Margin (candidates for rationalization).</p>
+
+    <h4>Per-Region Profitability</h4>
+    <p>Some regions have higher cost-to-serve (remote areas, low density) and lower realization (competitive pricing pressure). Build region-level P&Ls to decide: where to invest for growth, where to optimize costs, and where to reconsider presence.</p>
+
+    <div class="note">The litmus test: if you removed a channel/SKU/region tomorrow, would your overall P&L improve? If yes, it's destroying value. Either fix it (negotiate better terms, reduce costs, improve mix) or exit.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 5 ==================== -->
+<section class="module" id="mod5">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 05</div>
+    <h2 class="module-title">Inventory & Category Management</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod5')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod5')" id="mod5-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod5">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Days of Inventory (DOI)</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Definition</h4>
+    <p><strong>Days of Inventory (DOI)</strong>, also called Days Inventory Outstanding (DIO), measures how many days it takes to sell through your average inventory. Lower DOI = faster turnover = less cash tied up and less expiry risk.</p>
+    <div class="formula"><strong>DOI = (Average Inventory Value at Cost ÷ COGS per day)</strong><br>Where COGS per day = Annual COGS ÷ 365<br><br>Or: <strong>DOI = (Average Inventory ÷ Monthly COGS) × 30</strong></div>
+
+    <h4>Target Ranges</h4>
+    <table>
+      <tr><th>Category</th><th>Target DOI</th><th>Rationale</th></tr>
+      <tr><td>FMCG (food, beverages)</td><td>15–30 days</td><td>Short shelf life, high velocity</td></tr>
+      <tr><td>Personal Care / Beauty</td><td>30–60 days</td><td>Longer shelf life, moderate velocity</td></tr>
+      <tr><td>Home Care</td><td>30–45 days</td><td>Bulky items, predictable demand</td></tr>
+      <tr><td>Health / OTC Pharma</td><td>45–90 days</td><td>Regulatory requirements, longer shelf life</td></tr>
+    </table>
+
+    <div class="example">Your warehouse holds an average inventory of ₹18L (at cost). Monthly COGS = ₹12L. DOI = (18/12) × 30 = <strong>45 days</strong>. For a personal care brand, this is acceptable. For food, it's dangerously high.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod5">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Slow & Non-Moving Inventory</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Classification</h4>
+    <ul>
+      <li><strong>Fast-moving:</strong> Sells within 30 days of stocking. Your top 20% SKUs by velocity.</li>
+      <li><strong>Slow-moving (SLOB):</strong> Takes 60–120 days to sell. Identifies SKUs with declining demand or poor distribution.</li>
+      <li><strong>Non-moving (Dead stock):</strong> No sales in 90+ days. These are write-off candidates.</li>
+    </ul>
+    <h4>Identification Methods</h4>
+    <p>Run an <strong>aging analysis</strong> every month: bucket all inventory by age (0–30 days, 31–60, 61–90, 90+). Any SKU with 90+ days of inventory and declining weekly offtake is a red flag.</p>
+
+    <h4>Liquidation Strategies</h4>
+    <ul>
+      <li><strong>Bundling:</strong> Pair slow movers with fast movers in combo packs. E.g., "Buy Best-seller Hair Oil, get slow-mover Shampoo at 50% off."</li>
+      <li><strong>Flash sales (e-commerce):</strong> Deep discounts on marketplaces to clear stock. Accept margin erosion to recover cash.</li>
+      <li><strong>Employee / Institutional sales:</strong> Offer to employees, corporate gifting companies, or institutional buyers at heavy discounts.</li>
+      <li><strong>Channel-specific offers:</strong> Use GT schemes to push slow movers: "Free 1 unit of X with every 10 units of top seller."</li>
+      <li><strong>Write-off:</strong> If the product is nearing expiry or is unsellable, write it off. Take the P&L hit cleanly rather than inflating inventory with worthless stock.</li>
+    </ul>
+
+    <div class="note"><strong>Prevention > Cure.</strong> The best way to manage slow/non-moving inventory is better demand forecasting, disciplined launch planning (don't over-produce new SKUs until demand is validated), and regular SKU rationalization reviews (quarterly).</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod5">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Fill Rate vs Service Level</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Fill Rate</h4>
+    <p>Measures the percentage of <strong>order quantity</strong> fulfilled from available stock. If a retailer orders 100 units and you deliver 85, your fill rate is 85%.</p>
+    <div class="formula"><strong>Fill Rate = (Units Shipped ÷ Units Ordered) × 100</strong></div>
+
+    <h4>Service Level (OTIF)</h4>
+    <p>Measures the percentage of <strong>orders</strong> delivered <strong>On Time and In Full</strong>. It's stricter than fill rate — the order must be complete (all SKUs, all quantities) AND on time. A partial delivery = OTIF fail even if fill rate is 90%.</p>
+    <div class="formula"><strong>OTIF = (Orders delivered complete AND on time ÷ Total orders) × 100</strong></div>
+
+    <h4>Key Difference</h4>
+    <p>Fill rate is about <strong>quantity</strong>. Service level (OTIF) is about <strong>order quality</strong>. You can have 95% fill rate but 70% OTIF if many orders are partially fulfilled or delivered late. MT chains and Q-commerce platforms increasingly track OTIF, not just fill rate. Penalties for low OTIF can be severe — charge-backs, reduced order allocation, or delisting.</p>
+
+    <h4>How to Improve</h4>
+    <ul>
+      <li>Better demand forecasting (reduce stockouts at source)</li>
+      <li>Safety stock optimization (hold buffer for high-velocity SKUs)</li>
+      <li>Faster replenishment cycles (reduce lead times)</li>
+      <li>SKU-level monitoring (track fill rate per SKU, not just average)</li>
+      <li>Warehouse efficiency (pick-pack-dispatch accuracy and speed)</li>
+    </ul>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod5">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Demand Forecasting Basics</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Why Forecast?</h4>
+    <p>Accurate demand forecasting reduces stockouts, prevents overstock, optimizes cash flow, and improves service levels. In FMCG, where shelf life is limited and seasons matter, forecasting is a core operational capability.</p>
+
+    <h4>Simple Moving Average</h4>
+    <div class="formula"><strong>Forecast for next month = Average of last N months' actual sales</strong><br>3-month MA: Forecast = (Month1 + Month2 + Month3) ÷ 3</div>
+    <p>Pros: Simple, easy to calculate. Cons: Doesn't account for trends or seasonality. Use for stable, non-seasonal categories.</p>
+
+    <h4>Weighted Moving Average</h4>
+    <div class="formula"><strong>Forecast = (W1 × Month1) + (W2 × Month2) + (W3 × Month3)</strong><br>Where W1 > W2 > W3 and W1 + W2 + W3 = 1</div>
+    <p>Gives more weight to recent data. E.g., weights of 0.5, 0.3, 0.2 — last month matters most.</p>
+
+    <h4>Trend Adjustment</h4>
+    <p>If sales are consistently growing 5% month-on-month, your MA forecast should be adjusted upward by 5%. Calculate the trend line (slope) and add it to the MA forecast.</p>
+
+    <h4>Seasonality Factor</h4>
+    <div class="formula"><strong>Seasonal Adjusted Forecast = Base Forecast × Seasonality Index</strong><br>Seasonality Index = Historical sales in that month ÷ Average monthly sales over the year</div>
+    <div class="example">Your average monthly sales are 5,000 units. Historical November (festive) sales average 7,500 units. Seasonality Index for November = 7,500 ÷ 5,000 = 1.5. If your base forecast for November is 5,500 units (from trend), adjusted forecast = 5,500 × 1.5 = <strong>8,250 units</strong>.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod5">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Category Captain & SKU Rationalization</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Category Captain Concept</h4>
+    <p><strong>Definition:</strong> A Category Captain is a leading brand/vendor that a retailer trusts to <strong>manage and advise on the entire category</strong> — not just their own brand. The captain provides data, insights, planogram recommendations, and assortment advice for the full category, including competitors.</p>
+    <p><strong>Benefits for the brand:</strong> Influence over shelf space allocation, early access to retailer data, stronger buyer relationship, ability to shape the category in your favor (within ethical boundaries).</p>
+    <p><strong>How to become one:</strong> Invest in category insights (Nielsen/IRI data, shopper research), share insights generously with the buyer, propose category growth plans that benefit the retailer (not just your brand), and demonstrate strong execution track record.</p>
+
+    <h4>SKU Rationalization</h4>
+    <p><strong>Definition:</strong> The process of reviewing your entire SKU portfolio and eliminating underperformers to reduce complexity, improve focus, and free up resources.</p>
+    <p><strong>When to do it:</strong> Quarterly review. Red flags: too many SKUs for your scale (tail SKUs with <1% revenue share), low-velocity SKUs with high inventory holding, overlapping SKUs that cannibalize each other.</p>
+    <p><strong>Process:</strong></p>
+    <ul>
+      <li>Rank SKUs by revenue contribution and margin contribution</li>
+      <li>Plot on a 2×2 matrix: Revenue Share (high/low) × Margin (high/low)</li>
+      <li>Bottom-left quadrant (low revenue + low margin) = rationalization candidates</li>
+      <li>Cross-check with strategic importance: is this SKU a must-have for retail listing? An entry-price-point? A new launch still building?</li>
+      <li>If no strategic justification → phase out. Communicate to distributors and retailers with 60-day notice.</li>
+    </ul>
+    <div class="note"><strong>The 80/20 rule applies:</strong> 20% of your SKUs likely drive 80% of revenue. The long tail of SKUs consumes disproportionate supply chain complexity, working capital, and management attention. Rationalize ruthlessly — but preserve SKUs that serve strategic purposes (market entry, retailer assortment requirements, bundling partners).</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 6 ==================== -->
+<section class="module" id="mod6">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 06</div>
+    <h2 class="module-title">E-Commerce Fundamentals</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod6')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod6')" id="mod6-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod6">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Marketplace vs D2C vs Quick Commerce</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Marketplace Model</h4>
+    <p>You list your products on a third-party platform (Amazon, Flipkart, Nykaa, Meesho). The platform provides traffic, payments, fulfilment infrastructure, and customer service. You pay commissions + fees. You don't own the customer — the platform does.</p>
+    <p><strong>Pros:</strong> Massive reach (Amazon alone has 300M+ visitors/month in India), built-in trust, fulfilment infrastructure (FBA/Flipkart Assured), advertising tools. <strong>Cons:</strong> High fee structure (30–45% effective take), no customer data ownership, race-to-bottom pricing, dependency on platform algorithms.</p>
+
+    <h4>D2C (Direct to Consumer)</h4>
+    <p>Your own website/app (Shopify, WooCommerce, etc.). You own the customer relationship, data, and experience. You control pricing, branding, and margins.</p>
+    <p><strong>Pros:</strong> Higher margins (no marketplace commission), own customer data (email, phone for remarketing), full brand control, can run loyalty programs. <strong>Cons:</strong> You pay for traffic (Meta/Google ads — CAC can be ₹200–₹800 per order), need to build trust from scratch, manage logistics yourself or via 3PL.</p>
+
+    <h4>Quick Commerce</h4>
+    <p>Ultra-fast delivery via dark stores (Blinkit, Zepto, Swiggy Instamart). Inventory is pre-positioned in hyperlocal dark stores for 10–30 min delivery. The platform controls the last mile and customer experience.</p>
+    <p><strong>Pros:</strong> Captures impulse purchases, high frequency/repeat, growing rapidly (30%+ YoY). <strong>Cons:</strong> Very high margin ask (35–50%), limited assortment per dark store, brands have less control, heavy dependence on platform's dark store network.</p>
+
+    <table>
+      <tr><th>Parameter</th><th>Marketplace</th><th>D2C</th><th>Q-Commerce</th></tr>
+      <tr><td>Margin to Platform</td><td>30–45%</td><td>0% (you own it)</td><td>35–50%</td></tr>
+      <tr><td>Customer Data</td><td>Platform owns</td><td>You own</td><td>Platform owns</td></tr>
+      <tr><td>Traffic Source</td><td>Platform organic + ads</td><td>Paid ads + SEO + social</td><td>Platform app</td></tr>
+      <tr><td>Delivery Speed</td><td>1–7 days</td><td>2–7 days</td><td>10–30 minutes</td></tr>
+      <tr><td>CAC</td><td>Ad-driven (variable)</td><td>₹200–₹800/order</td><td>Platform handles</td></tr>
+      <tr><td>Best For</td><td>Scale, discovery</td><td>Brand building, margins</td><td>Impulse, replenishment</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod6">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Key E-Commerce Metrics (GMV, ROAS, ACoS, DRR, etc.)</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>GMV vs Net Revenue</h4>
+    <p><strong>GMV (Gross Merchandise Value):</strong> Total value of all orders placed. Includes cancelled orders, returns, and discounts. It's the vanity metric of e-commerce.</p>
+    <p><strong>Net Revenue:</strong> What you actually realize after returns, cancellations, platform fees, and discounts. This is the real number.</p>
+    <div class="formula"><strong>Net Revenue = GMV – Returns – Cancellations – Platform Fees – Discounts</strong></div>
+
+    <h4>Return Rate & P&L Impact</h4>
+    <div class="formula"><strong>Return Rate = (Units Returned ÷ Units Shipped) × 100</strong></div>
+    <p>For fashion/apparel: 25–40%. Personal care: 3–8%. Electronics: 5–15%. Each return costs you: reverse logistics, refurbishment/re-packaging, and the delay in cash recovery. A 10% return rate can reduce your effective margin by 5–8 percentage points.</p>
+
+    <h4>Ad Spend Metrics</h4>
+    <div class="formula">
+      <strong>ACoS (Advertising Cost of Sale):</strong> Ad Spend ÷ Ad-Attributed Revenue × 100<br>
+      → Lower is better. Target: 15–25% for established brands, 30–50% for new launches.<br><br>
+      <strong>ROAS (Return on Ad Spend):</strong> Ad-Attributed Revenue ÷ Ad Spend<br>
+      → Higher is better. ROAS of 4x means ₹4 revenue for every ₹1 spent on ads.<br>
+      → ROAS = 1 / ACoS<br><br>
+      <strong>TACoS (Total Advertising Cost of Sale):</strong> Ad Spend ÷ Total Revenue (organic + ad-driven) × 100<br>
+      → Measures how dependent your total business is on ads. Healthy: 8–15%. Above 20% = you're over-dependent on ads.
+    </div>
+
+    <h4>Conversion & Traffic Metrics</h4>
+    <div class="formula">
+      <strong>Conversion Rate:</strong> Orders ÷ Sessions (product page visits) × 100. Benchmark: 5–15% on Amazon for FMCG.<br><br>
+      <strong>CTR (Click-Through Rate):</strong> Clicks ÷ Impressions × 100. For Sponsored Products ads, target 0.3–0.8%.<br><br>
+      <strong>Sessions:</strong> Unique visits to your product listing. Traffic is the top of the funnel.
+    </div>
+
+    <h4>DRR & MRR</h4>
+    <div class="formula">
+      <strong>DRR (Daily Run Rate):</strong> Total Revenue ÷ Number of Days in Period<br>
+      <strong>MRR (Monthly Run Rate):</strong> DRR × 30 (or actual days in the month)<br>
+      Used for real-time performance tracking. "Our DRR is ₹85K" means on average we're doing ₹85,000/day in sales.
+    </div>
+
+    <h4>Buy Box</h4>
+    <p><strong>Definition:</strong> On Amazon, the Buy Box is the prominent "Add to Cart" button on a product page. When multiple sellers list the same product, Amazon's algorithm decides which seller gets the Buy Box. Winning the Buy Box = getting 80–90% of sales for that listing.</p>
+    <p><strong>How to win it:</strong> Competitive pricing (not necessarily cheapest — but close), fulfilment by Amazon (FBA) gives an edge, high seller rating, good stock availability, and fast shipping.</p>
+
+    <h4>Star Rating Impact</h4>
+    <p>Products with 4.0+ stars convert at 2–3x the rate of products with 3.5 stars. Below 3.5 stars, conversion drops dramatically. A single star rating drop from 4.2 to 3.8 can reduce sales by 20–30%. Active review management, quality control, and post-purchase engagement are critical.</p>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod6">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Catalog Management & Marketplace SEO</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Product Title</h4>
+    <p>The title is your primary SEO and conversion tool. Structure: <strong>Brand Name + Product Type + Key Attribute + Size/Variant + Primary Keyword</strong>.</p>
+    <div class="example">"Soulflower Rosemary Essential Oil for Hair Growth – 100% Pure & Natural, Cold Pressed, 30ml" — covers brand, product type, key benefit (hair growth), credentials (pure, natural, cold pressed), and size.</div>
+
+    <h4>Images</h4>
+    <p>Amazon allows 7 images + 1 video. Use all of them. Structure: Main image (white background, product only), lifestyle image, infographic with key benefits, ingredient highlight, how-to-use, comparison chart, social proof/reviews highlight. Image quality = conversion rate driver.</p>
+
+    <h4>A+ Content (Enhanced Brand Content)</h4>
+    <p>Rich content section below the fold on Amazon. Use it for storytelling, comparison tables (vs your own SKUs, not competitors by name), detailed ingredient info, usage instructions, and brand story. A+ content can lift conversion by 5–15%.</p>
+
+    <h4>Backend Keywords</h4>
+    <p>Amazon has a hidden "search terms" field in your listing backend. Stuff it with all relevant keywords that aren't in your title or description. Include synonyms, misspellings, Hindi transliterations, related search queries. 250-byte limit — use every byte.</p>
+
+    <h4>Pricing Strategy</h4>
+    <ul>
+      <li><strong>MSRP (MRP):</strong> The maximum retail price. Set this as the "price" on the listing so the discount is visible.</li>
+      <li><strong>Selling Price:</strong> The actual selling price. Should be competitive vs similar products. Use tools to track competitor pricing.</li>
+      <li><strong>Floor Price:</strong> The minimum price below which you can't sell without making a loss. Calculate as: COGS + Platform Fees + Shipping + Minimum Margin.</li>
+    </ul>
+    <div class="note">On marketplaces, the algorithm favors: competitive pricing, high conversion rate, good reviews, and stock availability. Optimize all four simultaneously. A great listing with no stock loses rank. A stocked product with bad images doesn't convert.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod6">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Platform Fee Structures & OOS Impact</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Amazon Fee Structure (India, Typical)</h4>
+    <table>
+      <tr><th>Fee Type</th><th>Typical Range</th><th>What It Is</th></tr>
+      <tr><td>Referral Fee</td><td>5–17%</td><td>Commission on selling price. Varies by category. Beauty: ~8–10%.</td></tr>
+      <tr><td>Fulfilment Fee (FBA)</td><td>₹25–₹90/unit</td><td>Pick, pack, ship fee. Based on weight and size tier.</td></tr>
+      <tr><td>Storage Fee</td><td>₹2–₹8/unit/month</td><td>Warehousing in Amazon FC. Higher in Oct-Dec (peak).</td></tr>
+      <tr><td>Closing Fee</td><td>₹3–₹60/unit</td><td>Fixed per-unit fee. Varies by price band.</td></tr>
+      <tr><td>Weight Handling</td><td>₹10–₹40/unit</td><td>Last-mile shipping weight charge for self-ship orders.</td></tr>
+    </table>
+    <p><strong>Effective take rate:</strong> Add all fees → typically 28–42% of selling price for beauty/personal care. This means on a ₹449 product, Amazon takes ₹125–₹190.</p>
+
+    <h4>Flipkart</h4>
+    <p>Similar structure: commission (category-based) + shipping fee (weight/zone based) + collection fee + fixed fee. Total take rate is comparable to Amazon. Flipkart Assured (like FBA) gives visibility advantage but adds fulfilment cost.</p>
+
+    <h4>Out of Stock (OOS) Impact</h4>
+    <p>Going OOS on a marketplace is catastrophic:</p>
+    <ul>
+      <li><strong>Ranking drops:</strong> Amazon's algorithm penalizes products that go OOS. When you restock, you don't return to your previous rank — you have to rebuild.</li>
+      <li><strong>Lost sales:</strong> Obvious — every day of OOS = lost revenue. Use DRR to calculate: 3 days OOS at ₹85K DRR = ₹2.55L lost.</li>
+      <li><strong>Ad waste:</strong> If ads are running during OOS, you're spending money driving traffic to a listing that can't convert.</li>
+      <li><strong>Competitor gain:</strong> Your traffic goes to competitors. Some of those customers may never come back.</li>
+    </ul>
+    <div class="note">Maintain <strong>15–30 days of inventory</strong> at the fulfilment center at all times. Set up reorder alerts. For FBA, use Amazon's Inventory Performance Index (IPI) to monitor health. IPI below 400 = Amazon may restrict your storage space.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod6">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">How Meesho Works</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>The Reseller Model</h4>
+    <p><strong>Meesho's model is fundamentally different from Amazon/Flipkart.</strong> It's a social commerce platform where individual resellers (mostly women, homemakers, micro-entrepreneurs) browse the catalog, select products, add their own margin, and share listings with their social network (WhatsApp, Instagram, Facebook groups). When an order comes through the reseller, Meesho handles logistics and payment.</p>
+
+    <h4>How It Works for a Brand</h4>
+    <ul>
+      <li><strong>Listing:</strong> You list products at a base price (your price to Meesho). Meesho adds its commission. Resellers add their margin on top.</li>
+      <li><strong>No MRP control:</strong> The final selling price depends on the reseller's markup. This can create pricing inconsistencies across channels. Be cautious with premium brands.</li>
+      <li><strong>0% commission model:</strong> Meesho has moved to a 0% commission model for suppliers in many categories, making money from logistics fees instead. This is great for supplier margins.</li>
+      <li><strong>Returns:</strong> Return rates on Meesho can be high (15–30%) because end customers often haven't seen the product in person and buy impulsively via social sharing.</li>
+    </ul>
+
+    <h4>Catalog Tips for Meesho</h4>
+    <ul>
+      <li>Use clear, attractive images — resellers share these directly to WhatsApp</li>
+      <li>Price competitively — Meesho customers are price-sensitive (Tier 2/3 cities dominant)</li>
+      <li>Offer value packs and combos — resellers prefer products with clear value proposition</li>
+      <li>Keep descriptions simple — many resellers and their customers don't read long descriptions</li>
+    </ul>
+    <div class="note">Meesho gives access to <strong>Bharat's digital consumers</strong> — Tier 2, 3, 4 cities and towns that are hard to reach through Amazon/Flipkart. If your brand has products priced under ₹500, Meesho can be a powerful volume channel. But manage return rates aggressively and ensure packaging survives the logistics network.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 7 ==================== -->
+<section class="module" id="mod7">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 07</div>
+    <h2 class="module-title">Quick Commerce (Q-Commerce)</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod7')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod7')" id="mod7-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod7">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">What Is Q-Commerce? Business Model & Dark Stores</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>The Business Model</h4>
+    <p><strong>Quick Commerce (Q-Commerce)</strong> delivers products to consumers within 10–30 minutes of placing an order. It operates through a network of <strong>dark stores</strong> — small, hyperlocal warehouses (typically 2,000–4,000 sq ft) located in dense urban neighborhoods. Each dark store serves a 2–4 km radius.</p>
+    <p>The model: Brand → Q-commerce platform warehouse → Dark store → Consumer's doorstep (via delivery rider) within minutes.</p>
+
+    <h4>Dark Stores Explained</h4>
+    <p>A dark store is not a retail shop. It's a mini-warehouse optimized for rapid pick-pack-dispatch, not for walk-in customers. Key features:</p>
+    <ul>
+      <li><strong>Curated assortment:</strong> 2,000–6,000 SKUs (vs 30,000+ in a supermarket). Only fast-moving items qualify.</li>
+      <li><strong>Hyperlocal inventory:</strong> Each dark store stocks products based on local demand patterns. A dark store in Bandra (Mumbai) has different assortment vs one in Koramangala (Bangalore).</li>
+      <li><strong>Optimized layout:</strong> Products arranged for picking speed, not visual merchandising. Everything is about seconds saved per order.</li>
+      <li><strong>Technology-driven:</strong> Real-time inventory, AI demand forecasting, automated replenishment triggers.</li>
+    </ul>
+
+    <h4>Last-Mile Delivery</h4>
+    <p>The delivery fleet (gig riders on bikes/scooters) picks up the packed order from the dark store and delivers within 10–20 minutes. The promise of speed is the entire value proposition. Average delivery time: Blinkit ~12 min, Zepto ~10 min, Swiggy Instamart ~15 min.</p>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod7">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Key Players in India</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <table>
+      <tr><th>Platform</th><th>Parent</th><th>Dark Stores</th><th>Key Strength</th></tr>
+      <tr><td><strong>Blinkit</strong></td><td>Zomato</td><td>700+ (and growing)</td><td>Largest network, strongest brand recall, aggressive expansion. Avg delivery: 12 min.</td></tr>
+      <tr><td><strong>Zepto</strong></td><td>Independent (funded)</td><td>500+</td><td>Speed pioneer (10-min promise), strong in Mumbai/Bangalore, premium user base.</td></tr>
+      <tr><td><strong>Swiggy Instamart</strong></td><td>Swiggy</td><td>550+</td><td>Leverages Swiggy's massive user base. Strong in South India. Broader category assortment.</td></tr>
+      <tr><td><strong>BBNow (BigBasket Now)</strong></td><td>Tata Group</td><td>300+</td><td>Tata ecosystem advantage, private label play, deep grocery expertise.</td></tr>
+    </table>
+    <p>All are currently in a land-grab phase — expanding dark store networks rapidly, burning cash on customer acquisition, and competing fiercely on delivery speed and assortment breadth.</p>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod7">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Brand Listing, Margins & Metrics</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>How Brands List on Q-Commerce</h4>
+    <p><strong>1. Approach the category team:</strong> Each platform has a buying/category team (similar to MT buyers). Reach out via email, platform seller portals, or through brokers/consultants who have relationships.</p>
+    <p><strong>2. Commercial negotiation:</strong> Agree on: brand margin (your discount from MRP), MRP, listing process, MOQ (Minimum Order Quantity) for dark stores, replenishment norms, and promotional participation.</p>
+    <p><strong>3. Inventory placement:</strong> Ship inventory to the platform's mother warehouse. The platform distributes to individual dark stores based on their demand forecasting algorithms.</p>
+    <p><strong>4. Go live:</strong> Products appear on the app when stocked in a dark store within the user's serviceable area.</p>
+
+    <h4>Margin Structure</h4>
+    <p>Q-commerce platforms typically demand <strong>35–50% margin</strong> from the brand (calculated as discount from MRP). This is higher than MT (25–40%) and significantly higher than GT (15–25%). The high margin reflects: dark store rent (prime urban locations), delivery fleet costs, and technology infrastructure.</p>
+    <div class="example">Your product MRP = ₹449. Platform demands 42% margin. Your selling price to platform = ₹449 × (1 – 0.42) = ₹260. If your COGS is ₹133, your gross margin on Q-commerce = ₹260 – ₹133 = ₹127 (49%). Compare to D2C where you might realize ₹380 net and gross margin = ₹247 (65%). Q-commerce is expensive but provides incremental volume.</div>
+
+    <h4>Key Q-Commerce Metrics</h4>
+    <div class="formula">
+      <strong>Fill Rate:</strong> % of orders where your product was available in the dark store. Target: 95%+.<br><br>
+      <strong>OTIF (On Time In Full):</strong> % of replenishment orders you deliver to the platform's warehouse on time and completely. Penalty for low OTIF.<br><br>
+      <strong>Rate of Sale (RoS):</strong> Units sold per dark store per day. The platform monitors this — low RoS = delisting from low-performing dark stores.<br><br>
+      <strong>NPS Impact:</strong> If your product quality causes returns/complaints, it affects your listing visibility. Platforms track brand-level NPS (Net Promoter Score).
+    </div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod7">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Q-Commerce vs MT vs GT Comparison</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <table>
+      <tr><th>Parameter</th><th>GT</th><th>MT</th><th>Q-Commerce</th></tr>
+      <tr><td>Distribution Model</td><td>Company → Distributor → Retailer</td><td>Company → Chain warehouse → Store</td><td>Company → Platform warehouse → Dark store</td></tr>
+      <tr><td>Cost to Consumer</td><td>MRP (occasionally slight discount)</td><td>MRP – promotions (5–15% off)</td><td>MRP (delivery fee sometimes)</td></tr>
+      <tr><td>Brand Margin Given</td><td>15–25%</td><td>25–45%</td><td>35–50%</td></tr>
+      <tr><td>Speed to Consumer</td><td>Walk-in purchase</td><td>Walk-in purchase</td><td>10–30 minutes</td></tr>
+      <tr><td>Data Availability</td><td>Poor (unless DMS deployed)</td><td>Good (POS data sharing)</td><td>Excellent (real-time digital)</td></tr>
+      <tr><td>Consumer Profile</td><td>All India, all income levels</td><td>Urban, middle-upper income</td><td>Urban, young, tech-savvy, convenience-seeking</td></tr>
+      <tr><td>SKU Assortment</td><td>Limited (by shelf space)</td><td>Wide (supermarket range)</td><td>Curated (fast-movers only)</td></tr>
+      <tr><td>Brand Building Potential</td><td>Limited (visibility dependent)</td><td>Good (in-store experience)</td><td>Limited (transactional)</td></tr>
+    </table>
+    <div class="note">For most FMCG brands, the optimal strategy is <strong>multi-channel presence</strong>: GT for depth and reach, MT for visibility and credibility, E-commerce for data and growth, Q-commerce for incremental volume and urban penetration. The allocation of resources (trade spend, inventory, people) across channels should reflect your brand's stage and strategy.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 8 ==================== -->
+<section class="module" id="mod8">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 08</div>
+    <h2 class="module-title">Operations & Supply Chain Basics</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod8')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod8')" id="mod8-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod8">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Supply Chain Tiers</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>The FMCG Supply Chain Flow</h4>
+    <div class="formula">
+      <strong>Manufacturer / Factory</strong><br>
+      ↓ (Freight-in / Primary transport)<br>
+      <strong>CFA / Central Depot / Mother Warehouse</strong><br>
+      ↓ (Primary dispatch to distributors)<br>
+      <strong>Distributor / Stockist</strong><br>
+      ↓ (Secondary delivery to retail)<br>
+      <strong>Retailer (Kirana / MT store / Pharmacy)</strong><br>
+      ↓ (Consumer purchase)<br>
+      <strong>End Consumer</strong>
+    </div>
+
+    <p><strong>For E-commerce:</strong> Manufacturer → Brand's warehouse → Marketplace Fulfilment Centre (Amazon FC / Flipkart Hub) → Consumer.</p>
+    <p><strong>For Q-commerce:</strong> Manufacturer → Brand's warehouse → Platform's mother warehouse → Dark stores → Consumer.</p>
+
+    <h4>Why Understanding Tiers Matters</h4>
+    <p>Each tier adds cost (handling, storage, transit, margin). The fewer tiers between you and the consumer, the better your margin — but the more operational complexity you take on. D2C = 1 tier (you to consumer). GT = 3–4 tiers. Each tier also adds time (lead time) and potential for damage/expiry.</p>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod8">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">CFA — Role, Cost & Evaluation</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is a CFA?</h4>
+    <p><strong>CFA (Carrying & Forwarding Agent)</strong> is a third-party partner who receives finished goods from your factory, stores them in their warehouse, and dispatches orders to distributors on your behalf. They don't take ownership of the goods — they're an intermediary providing warehousing + logistics services.</p>
+
+    <h4>Cost Structure</h4>
+    <ul>
+      <li><strong>C&F Commission:</strong> 2–5% of the invoice value passing through them. This covers storage, order processing, loading/unloading, and basic inventory management.</li>
+      <li><strong>Storage charges:</strong> Some CFAs charge rent per pallet/sqft/month in addition to commission.</li>
+      <li><strong>Transit insurance:</strong> Usually borne by the brand, but CFA may charge for handling.</li>
+    </ul>
+
+    <h4>How to Evaluate a CFA</h4>
+    <ul>
+      <li><strong>Warehouse quality:</strong> Is it clean, pest-free, temperature-appropriate? Does it have FIFO/FEFO systems?</li>
+      <li><strong>Geographic coverage:</strong> Can they service all distributors in the assigned region efficiently?</li>
+      <li><strong>Order processing speed:</strong> From order receipt to dispatch — should be <24 hours.</li>
+      <li><strong>Stock accuracy:</strong> Physical stock should match book stock (variance <0.5%).</li>
+      <li><strong>Damage rate:</strong> In-warehouse and in-transit damage should be <0.5%.</li>
+      <li><strong>Technology:</strong> Do they have WMS (Warehouse Management System)? Can they integrate with your ERP?</li>
+    </ul>
+    <div class="note">Consider moving from CFA model to your own leased warehouse + 3PL logistics as you scale. At scale, owning the warehouse gives better control and often lower cost per unit. But for early-stage brands, CFAs are a capital-light way to build pan-India distribution.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod8">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">3PL vs In-House Logistics</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <table>
+      <tr><th>Factor</th><th>3PL (Third-Party Logistics)</th><th>In-House</th></tr>
+      <tr><td>Capital Investment</td><td>Low (pay per use)</td><td>High (warehouse, vehicles, tech, people)</td></tr>
+      <tr><td>Scalability</td><td>Easy to scale up/down</td><td>Rigid, slow to scale</td></tr>
+      <tr><td>Control</td><td>Lower — shared resources</td><td>Full control over operations</td></tr>
+      <tr><td>Cost at Scale</td><td>Higher per unit</td><td>Lower per unit (economies of scale)</td></tr>
+      <tr><td>Expertise</td><td>Specialized logistics expertise</td><td>You build your own capability</td></tr>
+      <tr><td>Best For</td><td>Startups, seasonal businesses, new geographies</td><td>Mature brands with stable, high volumes</td></tr>
+    </table>
+    <p><strong>Hybrid approach (common):</strong> Own warehouse in top 2–3 markets (where volume justifies it), use 3PL for smaller markets and seasonal overflow. As you grow, keep evaluating the break-even point for each region.</p>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod8">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Warehouse Management — FIFO, FEFO & Batch Tracking</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>FIFO (First In, First Out)</h4>
+    <p>The oldest stock (first received) should be dispatched first. This prevents goods from aging in the warehouse while newer batches get shipped. Standard for most FMCG products.</p>
+
+    <h4>FEFO (First Expiry, First Out)</h4>
+    <p>Products closest to their expiry date get dispatched first, regardless of when they were received. More relevant for food, beverages, and pharma where shelf life is critical. FEFO takes precedence over FIFO when expiry management is critical.</p>
+
+    <h4>Bin Management</h4>
+    <p>Every location in the warehouse (shelf, rack, pallet position) is assigned a bin code. Products are mapped to specific bins. This enables accurate picking, faster order fulfilment, and real-time inventory location tracking.</p>
+
+    <h4>Batch / Lot Tracking</h4>
+    <p>Every production run gets a unique batch number. Tracking batches through the supply chain enables: quality traceability (if a defect is found, recall only that batch), expiry management (know exact expiry date per batch), and FEFO implementation (dispatch by earliest expiry batch first).</p>
+    <div class="note">For beauty/personal care, retailers (especially MT and pharma) increasingly demand minimum residual shelf life at the time of delivery — e.g., "at least 70% shelf life remaining." If your product has 24-month shelf life, the retailer wants it delivered with at least ~17 months remaining. This makes FEFO and expiry monitoring critical.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod8">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">OTIF, Reverse Logistics & Lead Time</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>OTIF (On Time In Full)</h4>
+    <div class="formula"><strong>OTIF = (Orders delivered On Time AND In Full ÷ Total Orders) × 100</strong></div>
+    <p>Both conditions must be met. "On Time" = within the agreed delivery window. "In Full" = complete order, all SKUs, all quantities. Partial delivery or late delivery = OTIF fail.</p>
+    <p>Target: 95%+ for GT distributors, 98%+ for MT chains, 95%+ for Q-commerce platforms.</p>
+
+    <h4>Reverse Logistics</h4>
+    <p>The process of managing returned goods — from consumer → retailer/platform → brand. This includes: customer returns (quality issues, wrong product, change of mind), trade returns (expired stock, damaged goods, unsold inventory), and e-commerce returns (the biggest reverse logistics challenge).</p>
+    <p><strong>Key challenges:</strong> Cost of reverse pickup (₹50–₹150 per return for e-commerce), product condition assessment (can it be resold?), inventory write-offs (if product is unsalvageable), and cash flow impact (refund is immediate, recovery is slow).</p>
+
+    <h4>Lead Time Management</h4>
+    <p><strong>Lead time</strong> = the total time from order placement to delivery. Components: order processing time + manufacturing/procurement time + transit time + receiving/put-away time.</p>
+    <div class="formula">
+      <strong>Total Lead Time = Order Processing + Production + Transit + Receiving</strong><br>
+      For a typical FMCG brand: 1–2 days + 3–7 days + 2–5 days + 1 day = <strong>7–15 days</strong> total.
+    </div>
+    <p><strong>Safety Stock Formula:</strong></p>
+    <div class="formula"><strong>Safety Stock = (Maximum Lead Time – Average Lead Time) × Average Daily Demand</strong></div>
+    <div class="example">Average daily demand = 200 units. Average lead time = 10 days. Maximum lead time = 15 days. Safety Stock = (15 – 10) × 200 = <strong>1,000 units</strong>. This buffer protects you against supply delays.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 9 ==================== -->
+<section class="module" id="mod9">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 09</div>
+    <h2 class="module-title">Data & Analytics for Sales</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod9')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod9')" id="mod9-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod9">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Building a Sales MIS in Excel</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is a Sales MIS?</h4>
+    <p><strong>Management Information System (MIS)</strong> for sales is a structured Excel workbook (or dashboard) that consolidates all sales data into actionable reports. It's the single source of truth for the sales team's performance.</p>
+
+    <h4>Key Sheets / Tabs</h4>
+    <ul>
+      <li><strong>Raw Data Tab:</strong> Transaction-level data. Columns: Date, Invoice No., Distributor, Region, ASM, Channel (GT/MT/E-com), SKU, SKU Category, Qty, Gross Value, Discount, Net Value, GST.</li>
+      <li><strong>Daily Summary:</strong> Pivot by date showing daily billing vs target, DRR, cumulative achievement.</li>
+      <li><strong>Region-wise Summary:</strong> Pivot by region/ASM showing achievement vs target, contribution %, growth vs last month and last year.</li>
+      <li><strong>Channel-wise Summary:</strong> GT vs MT vs E-com vs Q-com breakup. Revenue, margin, growth rate.</li>
+      <li><strong>SKU Performance:</strong> Top 20 SKUs by revenue, bottom 20 by revenue, SKUs by margin, new launches performance.</li>
+      <li><strong>Distributor Performance:</strong> Billing vs target per distributor, ECO, outstanding days.</li>
+    </ul>
+
+    <h4>Essential Formulas</h4>
+    <div class="formula">
+      <strong>Achievement %:</strong> =Actual/Target*100<br>
+      <strong>DRR:</strong> =MTD Sales/Days Elapsed<br>
+      <strong>Projected Month-End:</strong> =DRR × Total Days in Month<br>
+      <strong>Growth %:</strong> =(Current Period - Previous Period)/Previous Period*100<br>
+      <strong>Contribution %:</strong> =Region Sales/Total Sales*100
+    </div>
+    <div class="note">Keep it simple. An MIS that takes 2 hours to update daily is broken. Aim for a structure where raw data can be pasted in (from DMS/ERP export) and all pivots refresh automatically. Use named ranges and structured tables. Consider migrating to Power BI/Google Data Studio once the MIS becomes too complex for Excel.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod9">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Key Reports for Sales Ops</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Daily Reports</h4>
+    <ul>
+      <li><strong>Daily Sales Flash:</strong> Yesterday's billing vs target, DRR, % achievement MTD. Circulate by 10 AM.</li>
+      <li><strong>OOS Report (E-com):</strong> Which SKUs went out of stock on which marketplace? Immediate action required.</li>
+    </ul>
+
+    <h4>Weekly Reports</h4>
+    <ul>
+      <li><strong>Beat Compliance Report:</strong> How many beats were covered as planned? Deviations and reasons.</li>
+      <li><strong>Sell-Out Report (MT):</strong> Weekly sell-out from key MT partners. WoC (Weeks of Cover) by SKU.</li>
+      <li><strong>E-com Performance:</strong> Weekly GMV, sessions, conversion rate, ACoS, ROAS. Week-over-week trends.</li>
+      <li><strong>New Launch Tracker:</strong> Distribution build-up (how many outlets stocked), initial sell-through rates.</li>
+    </ul>
+
+    <h4>Monthly Reports</h4>
+    <ul>
+      <li><strong>Monthly Business Review (MBR) Deck:</strong> Comprehensive performance review: P&L summary, channel-wise performance, top/bottom SKUs, distribution metrics (ND, WD), competitive landscape, risks and action items for next month.</li>
+      <li><strong>Distributor Scorecard:</strong> Monthly scoring of all distributors on key KPIs.</li>
+      <li><strong>Inventory Health Report:</strong> DOI by SKU, aging analysis, slow/non-movers, near-expiry stock.</li>
+      <li><strong>Trade Spend Analysis:</strong> Scheme ROI, BTL activation results, channel-wise trade spend as % of NR.</li>
+    </ul>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod9">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Root Cause Analysis & Market Share Estimation</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Root Cause Analysis on Missed Targets</h4>
+    <p>When targets are missed, don't just ask "why?" — <strong>structure the analysis</strong>:</p>
+    <p><strong>Step 1 — Volume decomposition:</strong> Break down the miss by channel, region, distributor, and SKU. Where exactly is the gap?</p>
+    <p><strong>Step 2 — 5 Whys technique:</strong> Target missed by 15% → Why? → North region underperformed → Why? → 3 distributors didn't bill → Why? → Stockout at CFA → Why? → Delayed production → Why? → RM supplier had quality issues.</p>
+    <p><strong>Step 3 — Check all levers:</strong> Distribution (fewer outlets billed?), Throughput (lower per-outlet billing?), Price (margin pressure forcing lower realization?), Assortment (key SKUs unavailable?), Promotion (did the competitor out-promote you?).</p>
+
+    <h4>Market Share Estimation Without Nielsen/IRI</h4>
+    <p>When you don't have syndicated data, estimate market share using:</p>
+    <ul>
+      <li><strong>Secondary sales extrapolation:</strong> Your secondary sales ÷ Estimated category size in your distribution universe.</li>
+      <li><strong>Retail audit sampling:</strong> Survey 50–100 representative outlets. Record your brand's sales and total category sales. Extrapolate.</li>
+      <li><strong>Distributor intelligence:</strong> Distributors often know competitor sales in their territory (they hear from retailers). Aggregate this intel.</li>
+      <li><strong>E-commerce data:</strong> Use tools like SimilarWeb, Jungle Scout, or Helium 10 to estimate competitor marketplace sales. Marketplace share ≈ proxy for brand health.</li>
+    </ul>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod9">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Power BI Basics & A/B Testing Promotions</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>Power BI for Sales Dashboards</h4>
+    <p>Power BI takes your MIS to the next level — interactive, visual, and real-time (if connected to your data sources).</p>
+    <p><strong>Key charts for sales:</strong></p>
+    <ul>
+      <li><strong>Bar/Column charts:</strong> Revenue by region, by channel, by SKU. The workhorse of sales reporting.</li>
+      <li><strong>Line charts:</strong> Trend over time — daily DRR, monthly revenue, WoW growth. Always add a target line for comparison.</li>
+      <li><strong>Waterfall chart:</strong> P&L waterfall from Gross Revenue → Net Revenue → Gross Margin → EBITDA. Shows where value is added/lost.</li>
+      <li><strong>Scatter plot:</strong> SKU Margin vs Volume (BCG-style matrix). Quickly identifies stars, cash cows, question marks.</li>
+      <li><strong>Map visual:</strong> Geographic distribution of sales. Heat map by city/state. Instantly see weak geographies.</li>
+      <li><strong>KPI cards:</strong> Today's DRR, MTD achievement %, MoM growth — quick-glance numbers at the top of the dashboard.</li>
+    </ul>
+
+    <h4>A/B Testing Promotions</h4>
+    <p><strong>Concept:</strong> Test two promotional strategies simultaneously to determine which performs better. Instead of guessing which scheme will work, run both and let data decide.</p>
+    <p><strong>Setup:</strong> Split your stores/distributors into two comparable groups (similar size, geography, baseline sales). Group A gets Promotion X, Group B gets Promotion Y. Run for 4–6 weeks. Compare incremental sales, margin impact, and ROI.</p>
+    <div class="example">
+      You want to test: Scheme A (Buy 3 Get 1 Free) vs Scheme B (15% flat discount).<br>
+      Split 40 distributors: 20 get Scheme A, 20 get Scheme B. Run for 6 weeks.<br>
+      Results: Scheme A → 22% uplift in secondary, ₹1.2L incremental, ROI: 180%. Scheme B → 28% uplift, ₹1.6L incremental, ROI: 150%.<br>
+      Decision: Scheme B drives more volume but Scheme A is more profitable. Choose based on your current priority (volume vs margin).
+    </div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod9">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Cohort Analysis for E-Commerce</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What Is Cohort Analysis?</h4>
+    <p><strong>Definition:</strong> A cohort is a group of customers who share a common characteristic at a specific time — most commonly, the month they made their first purchase. Cohort analysis tracks how each group behaves over time (do they come back? how much do they spend?).</p>
+
+    <h4>Why It Matters for D2C/E-Commerce</h4>
+    <p>Customer acquisition is expensive. If customers buy once and never return, your CAC is wasted. Cohort analysis tells you: what % of January customers bought again in February, March, April? This is your <strong>retention curve</strong>.</p>
+
+    <h4>How to Build It</h4>
+    <p><strong>Step 1:</strong> For each customer, identify their "cohort month" (month of first purchase).</p>
+    <p><strong>Step 2:</strong> For each subsequent month, calculate what % of that cohort made another purchase.</p>
+    <p><strong>Step 3:</strong> Create a triangular matrix: rows = cohort months, columns = months since first purchase, cells = retention %.</p>
+
+    <div class="example">
+      January cohort: 1,000 customers acquired.<br>
+      Month 1 (Feb): 120 repurchased = 12% retention.<br>
+      Month 2 (Mar): 80 repurchased = 8% retention.<br>
+      Month 3 (Apr): 65 repurchased = 6.5% retention.<br>
+      If retention stabilizes at 5–6% monthly after Month 3, this is your "steady state." For a ₹500 AOV, each January cohort customer has an LTV of ₹500 × (1 + 0.12 + 0.08 + 0.065 + 0.05×12...) ≈ ₹1,150 over a year. If CAC is ₹400, LTV/CAC ratio = 2.9 — workable but could be better.
+    </div>
+    <div class="note">Cohort analysis is the single most important analysis for D2C brands. It tells you whether your business model is sustainable (LTV > CAC) and helps you identify which acquisition channels bring the most loyal customers.</div>
+  </div></div>
+</div>
+</section>
+
+<!-- ==================== MODULE 10 ==================== -->
+<section class="module" id="mod10">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 10</div>
+    <h2 class="module-title">Jargon Glossary</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod10')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod10')" id="mod10-complete">Mark Complete</button>
+  </div>
+</div>
+
+<input type="text" class="glossary-search" id="glossarySearch" placeholder="Search terms... (e.g., ROAS, Fill Rate, Beat Plan)" oninput="filterGlossary()">
+
+<div class="glossary-grid" id="glossaryGrid">
+</div>
+</section>
+
+<!-- ==================== MODULE 11 ==================== -->
+<section class="module" id="mod11">
+<div class="module-header">
+  <div>
+    <div class="module-tag">Module 11</div>
+    <h2 class="module-title">Career Transition Roadmap</h2>
+  </div>
+  <div class="module-actions">
+    <button class="btn" onclick="printModule('mod11')">⎙ Print</button>
+    <button class="btn btn-complete" onclick="markModuleComplete('mod11')" id="mod11-complete">Mark Complete</button>
+  </div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Skills Gap: FMCG Sales Ops → E-Commerce Manager</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What You Already Have (Transferable Skills)</h4>
+    <ul>
+      <li>P&L management — directly applicable to e-commerce P&L ownership</li>
+      <li>Channel management — understanding multiple sales channels and trade-offs</li>
+      <li>Data analysis (MIS, sales tracking) — foundation for e-commerce analytics</li>
+      <li>Vendor/partner management — translates to marketplace relationship management</li>
+      <li>Scheme/promotion planning — similar to e-commerce promotional strategy</li>
+      <li>Inventory management — critical for e-commerce (FBA, WoC, OOS management)</li>
+    </ul>
+
+    <h4>What You Need to Build</h4>
+    <table>
+      <tr><th>Skill Gap</th><th>How to Fill</th><th>Timeline</th></tr>
+      <tr><td>Marketplace advertising (Sponsored Products, DSP)</td><td>Amazon Advertising certification + hands-on campaign management</td><td>2–4 weeks</td></tr>
+      <tr><td>SEO for marketplaces (listing optimization)</td><td>Online courses + practice on a live listing</td><td>1–2 weeks</td></tr>
+      <tr><td>E-commerce analytics tools</td><td>Learn Helium 10 / Jungle Scout / Brand Analytics</td><td>2–3 weeks</td></tr>
+      <tr><td>Digital marketing basics</td><td>Google Digital Garage (free), Meta Blueprint (free)</td><td>3–4 weeks</td></tr>
+      <tr><td>D2C operations (Shopify, 3PL, CAC/LTV)</td><td>Build a test Shopify store, study D2C case studies</td><td>2–4 weeks</td></tr>
+      <tr><td>Performance marketing (Meta Ads, Google Ads)</td><td>Google Ads certification + run a small budget test campaign</td><td>4–6 weeks</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Skills Gap: FMCG Sales Ops → Q-Commerce Category Manager</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>What You Already Have</h4>
+    <ul>
+      <li>Category understanding — you know FMCG categories, margins, and consumer behavior</li>
+      <li>Vendor management — dealing with distributors is similar to dealing with brand partners</li>
+      <li>Trade planning — promotional calendars, scheme design, margin negotiation</li>
+      <li>Supply chain basics — inventory management, fill rates, OTIF</li>
+    </ul>
+
+    <h4>What You Need to Build</h4>
+    <table>
+      <tr><th>Skill Gap</th><th>How to Fill</th><th>Timeline</th></tr>
+      <tr><td>Dark store operations understanding</td><td>Visit dark stores (many allow guided visits), study unit economics</td><td>1–2 weeks</td></tr>
+      <tr><td>Assortment planning for limited-SKU environments</td><td>Study Q-commerce category frameworks, analyze live app assortments</td><td>2 weeks</td></tr>
+      <tr><td>Demand forecasting for hyperlocal, high-frequency</td><td>Online courses on demand planning + Q-commerce case studies</td><td>2–3 weeks</td></tr>
+      <tr><td>SQL & data querying</td><td>SQL is essential for category management roles at platforms. Learn on Khan Academy/W3Schools.</td><td>4–6 weeks</td></tr>
+      <tr><td>Understanding platform algorithms</td><td>Talk to Q-commerce insiders, read industry newsletters (Inc42, KenResearch)</td><td>Ongoing</td></tr>
+    </table>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">LinkedIn Keywords & Personal Branding</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>For E-Commerce Manager Roles</h4>
+    <p>Headline keywords: E-Commerce | Marketplace Management | Amazon Seller Central | P&L Management | FMCG | D2C | Performance Marketing | Brand Management</p>
+    <p>Skills to add: Amazon Advertising, Flipkart Seller Hub, Shopify, Google Analytics, ROAS optimization, Catalog Management, Marketplace SEO, Digital Marketing Strategy.</p>
+
+    <h4>For Q-Commerce Category Manager Roles</h4>
+    <p>Headline keywords: Category Management | Quick Commerce | FMCG | Assortment Planning | Vendor Management | P&L | Supply Chain | Data Analytics</p>
+    <p>Skills to add: SQL, Category Planning, Vendor Negotiation, Demand Forecasting, Fill Rate Optimization, Pricing Strategy, Retail Analytics, Dark Store Operations.</p>
+
+    <h4>Profile Optimization Tips</h4>
+    <ul>
+      <li>Rewrite your summary to emphasize multi-channel experience and data-driven decision making</li>
+      <li>Quantify achievements: "Managed ₹XX Cr channel with YY% growth" not "Responsible for sales"</li>
+      <li>Add relevant certifications (even in-progress ones) to the Certifications section</li>
+      <li>Publish 1–2 LinkedIn posts/month on FMCG/e-commerce insights to build visibility</li>
+      <li>Connect with e-commerce and Q-commerce leaders, recruiters, and peers in target companies</li>
+    </ul>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Interview Prep: Top 20 Questions for E-Commerce Roles</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <p><strong>1. Walk me through your experience managing a P&L.</strong><br>
+    <em>Model answer framework:</em> Start with the scale (₹X Cr), channels managed, key line items you controlled, one specific improvement you drove (e.g., "reduced trade spend from 18% to 14% while maintaining growth").</p>
+
+    <p><strong>2. How would you improve conversion rate on a product listing?</strong><br>
+    <em>Framework:</em> Audit title → images → A+ content → reviews → pricing → BSR. Identify weakest element. Test changes sequentially, measure impact over 2 weeks.</p>
+
+    <p><strong>3. What's your approach to managing ACoS while scaling?</strong><br>
+    <em>Framework:</em> Phase 1 (launch): Accept higher ACoS (40–60%) for visibility. Phase 2 (scale): Optimize keywords, bid management, negative keywords. Phase 3 (efficiency): Target 15–25% ACoS with strong organic sales carrying the business.</p>
+
+    <p><strong>4. How do you handle pricing conflicts between marketplace and offline?</strong><br>
+    <em>Framework:</em> Channel-exclusive SKUs, MAP enforcement, different pack sizes per channel, unified trade pricing with channel-specific activation.</p>
+
+    <p><strong>5. Describe a time you turned around an underperforming product.</strong><br>
+    <em>Framework:</em> Situation (what was failing and why), Action (root cause analysis, specific interventions — listing overhaul, ad strategy change, pricing adjustment), Result (quantified improvement).</p>
+
+    <p><strong>6. How do you calculate the profitability of a marketplace channel?</strong><br>
+    <em>Framework:</em> Build a channel P&L: GMV → less returns → Net Revenue → less platform fees → less COGS → less ad spend → less logistics → Contribution Margin. Compare CM across channels.</p>
+
+    <p><strong>7. What metrics would you track on Day 1 in an e-commerce role?</strong><br>
+    <em>Answer:</em> DRR, ACoS, TACoS, conversion rate, OOS rate, return rate, BSR for top SKUs. These give a comprehensive health check.</p>
+
+    <p><strong>8. How would you launch a new product on Amazon?</strong><br>
+    <em>Framework:</em> Pre-launch (catalog optimization, reviews seeding, inventory placement), Launch (aggressive ad spend, vine reviews, lightning deals), Post-launch (optimize bids, build organic rank, expand to new keywords).</p>
+
+    <p><strong>9. Explain ROAS vs TACoS. Which do you optimize for?</strong><br>
+    <em>Answer:</em> ROAS measures ad efficiency; TACoS measures ad dependency. Optimize for ROAS short-term, TACoS long-term. A declining TACoS means organic sales are growing faster than ad spend — the ideal trajectory.</p>
+
+    <p><strong>10. How do you manage inventory for seasonal demand?</strong><br>
+    <em>Framework:</em> Historical seasonality index, pre-season build-up (place orders 60–90 days before peak), safety stock for peak, planned markdown strategy for post-season excess.</p>
+
+    <p><strong>11-20 — Quick-fire answers to practice:</strong></p>
+    <ul>
+      <li><strong>11.</strong> How do you handle negative reviews? → Respond professionally, address root cause, drive positive reviews through follow-up emails.</li>
+      <li><strong>12.</strong> What's your approach to keyword research? → Brand Analytics, auto campaigns for discovery, competitor ASIN analysis.</li>
+      <li><strong>13.</strong> D2C vs Marketplace — where do you invest? → Both. Marketplace for volume/discovery, D2C for margin/data. 70/30 split initially.</li>
+      <li><strong>14.</strong> How do you measure the success of a promotion? → Incremental sales vs baseline, margin impact, new customer acquisition.</li>
+      <li><strong>15.</strong> How do you handle high return rates? → Root cause analysis (size/quality/packaging), improve listing accuracy, quality audits.</li>
+      <li><strong>16.</strong> What's your experience with A/B testing? → Use Amazon's Manage Your Experiments for titles/images/A+ content.</li>
+      <li><strong>17.</strong> How do you work with supply chain teams? → Shared forecasts, weekly sync on inventory, clear SLAs on lead times.</li>
+      <li><strong>18.</strong> Describe a data-driven decision you made. → Use the STAR format with specific numbers.</li>
+      <li><strong>19.</strong> How do you prioritize when managing 100+ SKUs? → ABC analysis by revenue × margin. Focus 80% effort on top 20 SKUs.</li>
+      <li><strong>20.</strong> Where do you see e-commerce in India in 5 years? → Share a thoughtful view on Q-commerce growth, D2C maturity, AI-driven personalization, and omnichannel convergence.</li>
+    </ul>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Certifications Worth Getting</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <table>
+      <tr><th>Certification</th><th>Provider</th><th>Cost</th><th>Value</th></tr>
+      <tr><td>Amazon Advertising Certification</td><td>Amazon</td><td>Free</td><td>High — shows marketplace expertise</td></tr>
+      <tr><td>Google Analytics Certification</td><td>Google</td><td>Free</td><td>High — essential for D2C</td></tr>
+      <tr><td>Google Ads Certification</td><td>Google</td><td>Free</td><td>Medium-High — for D2C/performance marketing</td></tr>
+      <tr><td>Meta Blueprint</td><td>Meta</td><td>Free</td><td>Medium — for social commerce understanding</td></tr>
+      <tr><td>HubSpot Inbound Marketing</td><td>HubSpot</td><td>Free</td><td>Medium — for D2C content strategy</td></tr>
+      <tr><td>SQL for Data Analysis</td><td>Various (Coursera, Khan)</td><td>Free/Low</td><td>High — essential for platform roles</td></tr>
+      <tr><td>Power BI / Tableau Certification</td><td>Microsoft / Salesforce</td><td>₹5,000–₹15,000</td><td>High — for analytics roles</td></tr>
+    </table>
+    <div class="note">Certifications alone won't get you the job, but they signal intent and capability. Combine certifications with <strong>practical experience</strong> — run a small D2C experiment, manage a friend's Amazon listing, create dashboards from publicly available data. Real experience + certification = interview confidence.</div>
+  </div></div>
+</div>
+
+<div class="accordion" data-module="mod11">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    <input type="checkbox" class="accordion-checkbox" onclick="event.stopPropagation();saveProgress()">
+    <span class="accordion-title">Framing Your FMCG Experience for E-Commerce JDs</span>
+    <span class="accordion-arrow">▼</span>
+  </div>
+  <div class="accordion-body"><div class="accordion-content">
+    <h4>The Translation Table</h4>
+    <table>
+      <tr><th>Your FMCG Experience</th><th>How to Frame for E-Commerce</th></tr>
+      <tr><td>Managed distributor network</td><td>Multi-channel distribution management across offline and emerging channels</td></tr>
+      <tr><td>Built MIS and tracked secondary sales</td><td>Data-driven sales analytics, MIS design, and performance monitoring</td></tr>
+      <tr><td>Managed P&L for GT/MT channels</td><td>P&L ownership with channel-level profitability analysis</td></tr>
+      <tr><td>Designed trade schemes</td><td>Promotional strategy and ROI optimization</td></tr>
+      <tr><td>Managed field sales team</td><td>Cross-functional team leadership and KPI-driven performance management</td></tr>
+      <tr><td>Worked with MT buyers (JBP)</td><td>Key Account Management and Joint Business Planning experience</td></tr>
+      <tr><td>Tracked inventory and managed DOI</td><td>Inventory planning and optimization for multi-location supply chains</td></tr>
+      <tr><td>Beat planning and ECO tracking</td><td>Market coverage strategy and distribution expansion</td></tr>
+    </table>
+    <div class="note">The key messaging: "I understand the entire value chain from manufacturing to consumer. I've managed P&Ls, built distribution, designed promotions, and driven growth with data. E-commerce is the next evolution of distribution — and I bring the commercial foundation that many digital-first candidates lack."</div>
+  </div></div>
+</div>
+</section>
+
+</main>
+
+<script>
+// ==================== GLOSSARY DATA ====================
+const glossaryData = [
+  {term:"ASM",def:"Area Sales Manager — manages a cluster of territories/distributors. Reports to RSM. Responsible for secondary sales targets, distributor management, and team supervision in their assigned geography."},
+  {term:"TSI",def:"Territory Sales Incharge — the front-line salesperson who visits retail outlets daily on a defined beat. Takes orders, ensures visibility, and tracks competitor activity. Also called SR (Sales Representative) or PSR (Pre-Sales Representative)."},
+  {term:"RSM",def:"Regional Sales Manager — manages multiple ASMs and a large geographic region. Responsible for regional P&L, distributor appointments/removals, and strategic planning."},
+  {term:"GT (General Trade)",def:"Traditional, unorganized retail — kirana stores, standalone shops, local grocers. ~80-85% of India's FMCG retail. Requires feet-on-street distribution."},
+  {term:"MT (Modern Trade)",def:"Organized retail chains — supermarkets, hypermarkets, department stores. Examples: Reliance Retail, DMart, Shoppers Stop. Requires Key Account Management approach."},
+  {term:"SKU",def:"Stock Keeping Unit — a unique identifier for each distinct product variant. E.g., 'Soulflower Rosemary Oil 30ml' and 'Soulflower Rosemary Oil 100ml' are two different SKUs."},
+  {term:"DRR",def:"Daily Run Rate — average daily revenue. Calculated as MTD revenue ÷ days elapsed. Used for real-time tracking and month-end projection."},
+  {term:"MRR",def:"Monthly Run Rate — projected monthly revenue based on current DRR. MRR = DRR × days in month."},
+  {term:"GMV",def:"Gross Merchandise Value — total value of all orders placed on a platform, before deductions for returns, cancellations, and discounts. The vanity metric of e-commerce."},
+  {term:"ACoS",def:"Advertising Cost of Sale — (Ad Spend ÷ Ad Revenue) × 100. Lower is better. Measures how much you spend on ads to generate each rupee of ad-attributed revenue. Target: 15-25% for established brands."},
+  {term:"ROAS",def:"Return on Ad Spend — Ad Revenue ÷ Ad Spend. Inverse of ACoS. A ROAS of 4x means ₹4 revenue per ₹1 ad spend. Higher is better."},
+  {term:"TACoS",def:"Total Advertising Cost of Sale — (Ad Spend ÷ Total Revenue) × 100. Measures ad dependency across organic + paid sales. Healthy: 8-15%."},
+  {term:"CTR",def:"Click-Through Rate — (Clicks ÷ Impressions) × 100. Measures how often people click your ad or listing after seeing it. Benchmark for Amazon Sponsored Products: 0.3-0.8%."},
+  {term:"Buy Box",def:"The 'Add to Cart' button on Amazon. When multiple sellers list the same product, Amazon's algorithm awards the Buy Box to the best seller (based on price, fulfilment, seller rating). Winning = 80-90% of sales."},
+  {term:"DOI",def:"Days of Inventory — measures how many days it takes to sell through average inventory. Formula: (Avg Inventory ÷ Daily COGS). Target varies by category: 15-60 days for FMCG."},
+  {term:"OTIF",def:"On Time In Full — % of orders delivered both on time and complete. Both conditions must be met. Target: 95%+ (GT), 98%+ (MT). The gold standard service metric."},
+  {term:"CFA",def:"Carrying & Forwarding Agent — third-party warehouse/logistics partner who stores finished goods and dispatches to distributors. Earns 2-5% commission. Common in pan-India FMCG distribution."},
+  {term:"3PL",def:"Third-Party Logistics — outsourced logistics provider handling warehousing, transportation, and fulfilment. Used when in-house logistics isn't cost-effective or scalable."},
+  {term:"BTL",def:"Below The Line — marketing activities targeting consumers at/near the point of purchase: sampling, in-store promoters, shelf displays, trade schemes, van activations. Drives immediate action."},
+  {term:"ATL",def:"Above The Line — mass media advertising: TV, radio, print, outdoor (billboards). Builds brand awareness at scale. Expensive but broad reach."},
+  {term:"JBP",def:"Joint Business Plan — collaborative annual plan between a brand and a key retail account. Covers targets, promotions, merchandising, supply chain, and investment commitments."},
+  {term:"KAM",def:"Key Account Management — dedicated management of strategically important retail accounts (large chains, platforms). KAMs negotiate trade terms, plan promotions, and own the account relationship."},
+  {term:"ROI",def:"Return on Investment — (Net Earnings ÷ Investment) × 100. Used everywhere: distributor ROI, BTL ROI, ad ROI, promotion ROI. The universal efficiency metric."},
+  {term:"P&L",def:"Profit & Loss Statement — financial statement showing revenue, costs, and profit over a period. In FMCG: GR → NR → Gross Margin → EBITDA. The P&L is the scorecard of the business."},
+  {term:"EBITDA",def:"Earnings Before Interest, Tax, Depreciation & Amortization — the operating profit metric. Shows how profitable the business is from operations, before accounting entries. EBITDA margin = EBITDA ÷ NR."},
+  {term:"COGS",def:"Cost of Goods Sold — direct cost of manufacturing: raw materials + packaging + manufacturing + freight-in. Deducted from NR to get Gross Margin."},
+  {term:"NR / NSV",def:"Net Revenue / Net Sales Value — Gross Revenue minus all trade deductions (discounts, schemes, returns, credit notes). The true top line."},
+  {term:"GR",def:"Gross Revenue — total invoice value of goods sold before any deductions. The biggest number on the P&L, but not the most meaningful."},
+  {term:"Planogram",def:"Visual diagram showing exact product placement on retail shelves — which product, what position, how many facings. Drives sales through strategic shelf space allocation."},
+  {term:"Category Captain",def:"A leading brand trusted by a retailer to manage and advise on the entire product category (including competitors). Provides insights, planogram recommendations, and category growth strategies."},
+  {term:"Fill Rate",def:"% of customer orders fulfilled from available stock. Formula: (Orders Fulfilled ÷ Total Orders) × 100. Target: 95%+. Low fill rate = lost sales + damaged trust."},
+  {term:"Service Level",def:"Often used interchangeably with OTIF. Measures the ability to fulfil orders completely and on time. May also refer to inventory service level: probability of not stocking out during a replenishment cycle."},
+  {term:"Beat Plan",def:"Pre-defined route a salesperson follows to visit a fixed set of retail outlets on a specific day. Ensures systematic market coverage and outlet-level frequency management."},
+  {term:"Numeric Distribution (ND)",def:"% of relevant retail outlets stocking your product. Formula: (Outlets with your product ÷ Total relevant outlets) × 100. Measures breadth of availability."},
+  {term:"Weighted Distribution (WD)",def:"% of total category sales coming from outlets that stock your product. Measures the quality/importance of your distribution. WD > ND = good outlet quality."},
+  {term:"Sell-In",def:"Goods sold INTO a retailer/store (from brand/distributor). Represents the retailer's purchase from you."},
+  {term:"Sell-Out",def:"Goods sold OUT of a retailer to end consumers (POS data). Represents actual consumer demand. The metric that matters most."},
+  {term:"DMS",def:"Distributor Management System — software at the distributor that captures every secondary invoice (to retailers). Provides real-time secondary sales data. Examples: Bizom, FieldAssist, Botree."},
+  {term:"Channel Conflict",def:"When two or more sales channels compete against each other, damaging pricing, margins, or relationships. E.g., e-commerce undercutting offline prices. Managed through MAP, channel-exclusive SKUs, and unified pricing."},
+  {term:"Trade Terms",def:"Commercial conditions negotiated with MT retailers: listing fees, promotional contributions, gondola charges, damage allowances, credit terms, and annual rebates. Significantly impacts cost-to-serve."},
+  {term:"Listing Fee",def:"One-time charge by MT retailers to list a new SKU. Can range from ₹5K–₹5L depending on chain and geography. A barrier to entry for new brands."},
+  {term:"Gondola End / End Cap",def:"Premium shelf position at the end of a retail aisle. High visibility, high sales impact. Charged weekly/monthly by the retailer."},
+  {term:"Promoter (In-Store)",def:"Brand ambassador deployed at a retail outlet to push sales. Cost: salary (₹12-18K/month) + retailer space fee. ROI must be tracked per promoter per store."},
+  {term:"AOV",def:"Average Order Value — total revenue ÷ number of orders. Higher AOV means more revenue per transaction. Improved through cross-selling, bundling, and minimum order incentives."},
+  {term:"Conversion Rate",def:"% of visitors/sessions that result in a purchase. For e-commerce: Orders ÷ Sessions × 100. Benchmark: 5-15% on Amazon for FMCG. Driven by listing quality, pricing, and reviews."},
+  {term:"Return Rate",def:"% of shipped orders that are returned. Formula: Returns ÷ Shipments × 100. Personal care: 3-8%. Fashion: 25-40%. Each return costs reverse logistics + refurbishment + cash delay."},
+  {term:"NPS",def:"Net Promoter Score — measures customer loyalty. Question: 'How likely are you to recommend this product (0-10)?' Score: % Promoters (9-10) minus % Detractors (0-6). Range: -100 to +100."},
+  {term:"FIFO",def:"First In, First Out — inventory management principle where oldest stock is dispatched first. Prevents aging and ensures freshness. Standard for most FMCG warehouses."},
+  {term:"FEFO",def:"First Expiry, First Out — dispatch products with the earliest expiry date first, regardless of receipt date. More critical than FIFO for food, pharma, and short-shelf-life products."},
+  {term:"Lead Time",def:"Total time from order placement to delivery. Includes: order processing + production/procurement + transit + receiving. Longer lead time = more safety stock needed."},
+  {term:"Safety Stock",def:"Buffer inventory held to protect against supply or demand variability. Formula: (Max Lead Time – Avg Lead Time) × Avg Daily Demand. Insurance against stockouts."},
+  {term:"Reorder Point",def:"Inventory level at which a new order must be placed. Formula: (Average Daily Demand × Lead Time) + Safety Stock. When stock hits this level, trigger a purchase order."},
+  {term:"Working Capital",def:"Money tied up in day-to-day operations: inventory + receivables – payables. Working Capital Days = Debtor Days + Inventory Days – Creditor Days. Lower = more cash-efficient."},
+  {term:"Debtor Days (DSO)",def:"Days Sales Outstanding — average days to collect payment from customers. Formula: (Avg Receivables ÷ Revenue) × 365. Lower is better. Target: 15-30 days (GT), 30-60 days (MT)."},
+  {term:"Creditor Days (DPO)",def:"Days Payable Outstanding — average days you take to pay suppliers. Formula: (Avg Payables ÷ Purchases) × 365. Higher is better for cash flow (within reason)."},
+  {term:"Inventory Days (DIO)",def:"Days Inventory Outstanding — same as DOI. Average days inventory sits before being sold. Formula: (Avg Inventory ÷ COGS) × 365. Target: 30-60 days for FMCG."},
+  {term:"Dark Store",def:"Small hyperlocal warehouse (2,000-4,000 sq ft) used by Q-commerce platforms for 10-30 minute delivery. Not open to walk-in customers. Stocks 2,000-6,000 fast-moving SKUs within a 2-4 km delivery radius."},
+  {term:"Quick Commerce (Q-Commerce)",def:"Ultra-fast delivery model (10-30 minutes) operating through dark stores. Players: Blinkit, Zepto, Swiggy Instamart, BBNow. Growing 30%+ YoY in India. High margin ask from brands (35-50%)."},
+  {term:"Hyperlocal",def:"Business model serving a very small geographic area (2-5 km radius). Q-commerce and food delivery are hyperlocal models. Inventory and marketing are tailored to neighborhood-level demand."},
+  {term:"Last Mile",def:"The final leg of delivery — from dark store/hub to the consumer's doorstep. The most expensive and complex part of logistics. Speed of last mile = key differentiator in Q-commerce."},
+  {term:"PTR",def:"Price to Retailer — the price at which the distributor sells to the retailer. PTR = MRP minus retailer margin (8-20% depending on category)."},
+  {term:"PTS",def:"Price to Stockist/Distributor — the price at which the company sells to the distributor. PTS = PTR minus distributor margin (3-10%)."},
+  {term:"ECO",def:"Effective Coverage of Outlets — % of mapped outlets that have been billed at least once in a given period (usually a month). Measures distribution effectiveness."},
+  {term:"Strike Rate",def:"% of outlet visits that result in an order. Formula: Productive Calls ÷ Total Calls × 100. Target: 60-80%. Low strike rate = salesman is visiting outlets that aren't buying."},
+  {term:"LPC",def:"Lines Per Call — average number of different SKUs ordered per productive call. Higher LPC = deeper distribution within each outlet. Indicates width of assortment placed."},
+  {term:"SFA",def:"Sales Force Automation — mobile app for field salespeople to take orders, capture GPS, record activities, and sync data to HQ. Examples: Bizom, FieldAssist, Salesforce."},
+  {term:"GMROI",def:"Gross Margin Return on Inventory Investment — Gross Margin ÷ Average Inventory Cost. Used by MT buyers to evaluate how much profit each rupee of inventory generates. Higher = more efficient."},
+  {term:"WoC",def:"Weeks of Cover — current inventory ÷ weekly sell-out rate. Shows how many weeks of sales are covered by existing stock. Target: 2-4 WoC for regular replenishment items."},
+  {term:"MAP",def:"Minimum Advertised Price — the lowest price at which a product can be advertised across channels. Used to prevent price wars between online and offline."},
+  {term:"BSR",def:"Best Seller Rank — Amazon's ranking of products within their category based on sales velocity. Lower BSR = higher sales. A key competitiveness metric on Amazon."},
+  {term:"FBA",def:"Fulfilment by Amazon — sellers ship inventory to Amazon's warehouses, and Amazon handles storage, picking, packing, shipping, and returns. Products get Prime badge. Higher fees but better conversion."},
+  {term:"A+ Content",def:"Enhanced Brand Content on Amazon — rich media section below the product description. Includes comparison charts, lifestyle images, brand story. Can improve conversion by 5-15%."},
+  {term:"CAC",def:"Customer Acquisition Cost — total marketing spend ÷ new customers acquired. For D2C: includes ad spend, influencer costs, and promotional discounts. Must be lower than LTV for sustainability."},
+  {term:"LTV / CLV",def:"Lifetime Value / Customer Lifetime Value — total revenue expected from a customer over their entire relationship with your brand. LTV > CAC = sustainable business model."},
+  {term:"Gross Margin",def:"Net Revenue minus COGS. Shows how much money is left after paying for the product itself. Gross Margin % = (NR – COGS) ÷ NR × 100. The foundation of profitability."},
+  {term:"Contribution Margin",def:"Revenue from a product/channel minus all directly attributable variable costs. Used to evaluate whether a specific SKU, channel, or region is worth continuing."},
+  {term:"CCC",def:"Cash Conversion Cycle — Debtor Days + Inventory Days – Creditor Days. Shows the number of days your capital is tied up in operations. Lower = healthier cash flow."},
+  {term:"RM / PM",def:"Raw Material / Packaging Material — the two largest components of COGS. RM = ingredients/inputs. PM = bottles, labels, cartons, wrapping. Together typically 40-60% of NR."},
+  {term:"Toll Manufacturing",def:"Outsourcing production to a third-party contract manufacturer. You provide the formula/specifications; they manufacture. Common for brands that don't own factories. Cost: per-unit manufacturing fee."},
+  {term:"MIS",def:"Management Information System — structured data reports (usually Excel-based) consolidating all key business metrics. Updated daily/weekly/monthly. The single source of truth for performance tracking."},
+  {term:"QBR",def:"Quarterly Business Review — structured review meeting with key accounts or internal leadership. Covers performance vs plan, challenges, opportunities, and next-quarter priorities."},
+  {term:"Super Stockist",def:"An intermediary who buys from the company and sells to distributors (not directly to retail). Used to reach remote geographies where direct CFA-to-distributor supply isn't feasible. Earns 1-3% margin."},
+  {term:"Shelf Life",def:"The period during which a product remains safe and effective for use. For beauty/personal care: typically 24-36 months. MT and pharmacy channels require minimum residual shelf life at delivery (usually 60-70%)."},
+  {term:"OOS",def:"Out of Stock — when a product is unavailable for purchase. On e-commerce, OOS kills ranking. In retail, OOS = lost sales to competitors. One of the most critical metrics to monitor daily."},
+  {term:"IPI",def:"Inventory Performance Index — Amazon's score (0-1000) measuring how well sellers manage FBA inventory. Below 400 = storage restrictions. Based on: excess inventory, sell-through rate, stranded inventory, in-stock rate."},
+];
+
+// Sort glossary alphabetically
+glossaryData.sort((a,b) => a.term.localeCompare(b.term));
+
+// ==================== INITIALIZE ====================
+document.addEventListener('DOMContentLoaded', () => {
+  renderGlossary();
+  loadProgress();
+  updateOverallProgress();
+});
+
+// ==================== GLOSSARY ====================
+function renderGlossary() {
+  const grid = document.getElementById('glossaryGrid');
+  grid.innerHTML = glossaryData.map(g =>
+    `<div class="glossary-item" data-term="${g.term.toLowerCase()}" data-def="${g.def.toLowerCase()}">
+      <div class="glossary-term">${g.term}</div>
+      <div class="glossary-def">${g.def}</div>
+    </div>`
+  ).join('');
+}
+
+function filterGlossary() {
+  const q = document.getElementById('glossarySearch').value.toLowerCase();
+  document.querySelectorAll('.glossary-item').forEach(item => {
+    const match = item.dataset.term.includes(q) || item.dataset.def.includes(q);
+    item.classList.toggle('hidden', !match);
+  });
+}
+
+// ==================== ACCORDION ====================
+function toggleAccordion(header) {
+  const acc = header.parentElement;
+  const wasOpen = acc.classList.contains('open');
+  // Close all in same module (optional: remove this for independent)
+  // acc.parentElement.querySelectorAll('.accordion.open').forEach(a => { if(a !== acc) a.classList.remove('open'); });
+  acc.classList.toggle('open', !wasOpen);
+}
+
+// ==================== SIDEBAR ====================
+function navClick(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  // Close mobile sidebar
+  if (window.innerWidth <= 768) {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+// Scroll spy
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const id = entry.target.id;
+      document.querySelectorAll('.nav-item').forEach(n => {
+        n.classList.toggle('active', n.getAttribute('href') === '#' + id);
+      });
+    }
+  });
+}, { threshold: 0.1, rootMargin: '-80px 0px -60% 0px' });
+
+document.querySelectorAll('.module').forEach(mod => observer.observe(mod));
+
+// ==================== PROGRESS ====================
+function saveProgress() {
+  const state = {};
+  document.querySelectorAll('.accordion-checkbox').forEach((cb, i) => {
+    state[i] = cb.checked;
+  });
+  // Save module completion
+  document.querySelectorAll('.module').forEach(mod => {
+    state['mod_' + mod.id] = mod.dataset.completed === 'true';
+  });
+  localStorage.setItem('fmcg_progress', JSON.stringify(state));
+  updateOverallProgress();
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem('fmcg_progress');
+  if (!saved) return;
+  const state = JSON.parse(saved);
+  document.querySelectorAll('.accordion-checkbox').forEach((cb, i) => {
+    if (state[i]) cb.checked = true;
+  });
+  document.querySelectorAll('.module').forEach(mod => {
+    if (state['mod_' + mod.id]) {
+      mod.dataset.completed = 'true';
+      const btn = document.getElementById(mod.id + '-complete');
+      if (btn) { btn.textContent = '✓ Completed'; btn.classList.add('btn-completed'); btn.classList.remove('btn-complete'); }
+      // Update sidebar
+      const navItem = document.querySelector(`a[href="#${mod.id}"]`);
+      if (navItem) navItem.classList.add('completed');
+    }
+  });
+}
+
+function updateOverallProgress() {
+  const checkboxes = document.querySelectorAll('.accordion-checkbox');
+  const checked = document.querySelectorAll('.accordion-checkbox:checked').length;
+  const total = checkboxes.length;
+  const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+  document.getElementById('progressPct').textContent = pct;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function markModuleComplete(modId) {
+  const mod = document.getElementById(modId);
+  const isCompleted = mod.dataset.completed === 'true';
+  mod.dataset.completed = isCompleted ? 'false' : 'true';
+
+  // Check/uncheck all sub-topics
+  mod.querySelectorAll('.accordion-checkbox').forEach(cb => { cb.checked = !isCompleted; });
+
+  // Update button
+  const btn = document.getElementById(modId + '-complete');
+  if (!isCompleted) {
+    btn.textContent = '✓ Completed'; btn.classList.add('btn-completed'); btn.classList.remove('btn-complete');
+  } else {
+    btn.textContent = 'Mark Complete'; btn.classList.remove('btn-completed'); btn.classList.add('btn-complete');
+  }
+
+  // Update sidebar
+  const navItem = document.querySelector(`a[href="#${modId}"]`);
+  if (navItem) navItem.classList.toggle('completed', !isCompleted);
+
+  saveProgress();
+}
+
+// ==================== THEME ====================
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? '' : 'light';
+  if (next) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  localStorage.setItem('fmcg_theme', next || 'dark');
+}
+
+// Load saved theme
+(function() {
+  const t = localStorage.getItem('fmcg_theme');
+  if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+})();
+
+// ==================== PRINT ====================
+function printModule(modId) {
+  // Open all accordions in the module before printing
+  document.querySelectorAll(`#${modId} .accordion`).forEach(a => a.classList.add('open'));
+  window.print();
+}
+</script>
+</body>
+</html>
